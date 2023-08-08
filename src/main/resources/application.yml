@@ -1,0 +1,9 @@
+server:
+  port: 8085
+spring:
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+    consumer:
+      bootstrap-servers: localhost:29092
+      auto-offset-reset: earliest
