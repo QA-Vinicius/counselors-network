@@ -38,15 +38,15 @@ public class Main {
         KafkaTemplate<String, String> kafkaTemplate = context.getBean(KafkaTemplate.class);
 
         /* Detector 1*/
-        Instances trainInstances = m.leadAndFilter(false, "D:/UFU/TCC/Datasets/ScriptDivisao/1output1k.csv", oneR_Detector1);
-        Instances evaluationInstances = m.leadAndFilter(false, "D:/UFU/TCC/Datasets/ScriptDivisao/2output1k.csv", oneR_Detector1);
-        Instances testInstances = m.leadAndFilter(false, "D:/UFU/TCC/Datasets/ScriptDivisao/3output1k.csv", oneR_Detector1);
+        Instances trainInstances = m.leadAndFilter(false, "1output1k.csv", oneR_Detector1);
+        Instances evaluationInstances = m.leadAndFilter(false, "2output1k.csv", oneR_Detector1);
+        Instances testInstances = m.leadAndFilter(false, "3output1k.csv", oneR_Detector1);
 
         /* Detector 2*/
-        Instances trainInstances2 = m.leadAndFilter(false, "D:/UFU/TCC/Datasets/ScriptDivisao/4output1k.csv", oneR_Detector2);
-        Instances evaluationInstances2 = m.leadAndFilter(false, "D:/UFU/TCC/Datasets/ScriptDivisao/5output1k.csv", oneR_Detector2);
+        Instances trainInstances2 = m.leadAndFilter(false, "4output1k.csv", oneR_Detector2);
+        Instances evaluationInstances2 = m.leadAndFilter(false, "5output1k.csv", oneR_Detector2);
         // Mesmo teste do D1, mas com outras features
-        Instances testInstances2 = m.leadAndFilter(false, "D:/UFU/TCC/Datasets/ScriptDivisao/6output1k.csv", oneR_Detector2);
+        Instances testInstances2 = m.leadAndFilter(false, "6output1k.csv", oneR_Detector2);
 
         /* Detector 1*/
         Detector D1 = new Detector(1, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS, kafkaTemplate);

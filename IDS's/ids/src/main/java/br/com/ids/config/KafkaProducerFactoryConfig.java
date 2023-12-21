@@ -1,4 +1,4 @@
-package com.mycompany.strproducer.config;
+package br.com.ids.config;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -14,7 +14,7 @@ import java.util.HashMap;
 
 @RequiredArgsConstructor
 @Configuration
-public class StringProducerFactoryConfig {
+public class KafkaProducerFactoryConfig {
 
     private final KafkaProperties properties;
 

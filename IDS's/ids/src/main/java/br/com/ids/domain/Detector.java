@@ -3,18 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.mycompany.counselorsnetwork;
+package br.com.ids.domain;
 
-import java.util.ArrayList;
-
-import lombok.RequiredArgsConstructor;
+import br.com.ids.dto.ConselorsDTO;
+import br.com.ids.producer.KafkaAdviceProducer;
+import br.com.ids.service.ClassifierService;
+import br.com.ids.service.DetectorClusterService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mycompany.dto.ConselorsDTO;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Instance;
 import weka.core.Instances;
+
+import java.util.ArrayList;
 
 /**
  *
@@ -23,12 +25,15 @@ import weka.core.Instances;
 public class Detector {
 
     // Variaveis para construcao do JSON a ser publicado
-    private KafkaTemplate<String, String> kafkaTemplate;
+    @Autowired
+    private KafkaAdviceProducer kafkaTemplate;
     int detectorID; // id de cada conselheiro
 
     SimpleKMeans kmeans;
-    DetectorCluster[] clusters;
-    Instances trainInstances;
+
+    @Autowired
+    DetectorClusterService[] clusters;
+    public Instances trainInstances;
     Instances evaluationInstances;
     Instances evaluationInstancesNoLabel;
     Instances testInstances;
@@ -42,6 +47,8 @@ public class Detector {
     ArrayList<Advice> historicalData = new ArrayList<>();
     String strTestAcc = "";
 
+    ClassifierService classifierService;
+
     public Detector(int detectorID, Instances trainInstances, Instances evaluationInstances, Instances testInstances, String normalClass, KafkaTemplate<String, String> kafkaTemplate) {
         this.detectorID = detectorID;
         this.trainInstances = trainInstances;
@@ -54,7 +61,6 @@ public class Detector {
         testInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
         advisors = new Detector[0];
         this.normalClass = normalClass;
-        this.kafkaTemplate = kafkaTemplate; // Atribuindo o kafkaTemplate recebido ao kafkaTemplate da classe
     }
 
     public Detector(int detectorID, Instances trainInstances, Instances evaluationInstances, Instances testInstances, Detector[] advisors, String normalClass, KafkaTemplate<String, String> kafkaTemplate) {
@@ -69,11 +75,11 @@ public class Detector {
         testInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
         this.advisors = advisors;
         this.normalClass = normalClass;
-        this.kafkaTemplate = kafkaTemplate; // Atribuindo o kafkaTemplate recebido ao kafkaTemplate da classe
+       // this.kafkaTemplate = kafkaTemplate; // Atribuindo o kafkaTemplate recebido ao kafkaTemplate da classe
     }
 
     public void createClusters(int k, int seed) throws Exception {
-        clusters = new DetectorCluster[k];
+        clusters = new DetectorClusterService[k];
         kmeans = new SimpleKMeans();
         kmeans.setSeed(seed);
         kmeans.setPreserveInstancesOrder(true);
@@ -81,7 +87,7 @@ public class Detector {
         kmeans.buildClusterer(evaluationInstancesNoLabel);
 
         for (int ki = 0; ki < k; ki++) {
-            clusters[ki] = new DetectorCluster(ki);
+            clusters[ki] = new DetectorClusterService(ki);
         }
         int[] assignments = kmeans.getAssignments(); // Avaliação No-Label
         for (int i = 0; i < assignments.length; i++) {
@@ -92,13 +98,13 @@ public class Detector {
     }
 
     public void trainClassifiers(boolean showTrainingTime) throws Exception {
-        for (DetectorCluster cluster : clusters) {
+        for (DetectorClusterService cluster : clusters) {
             cluster.trainClassifiers(trainInstances, showTrainingTime);
         }
     }
 
     public void evaluateClassifiersPerCluster(boolean printEvaluation, boolean showProgress) throws Exception {
-        for (DetectorCluster cluster : clusters) {
+        for (DetectorClusterService cluster : clusters) {
             evaluationInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
             cluster.evaluateClassifiers(evaluationInstances);
         }
@@ -141,11 +147,11 @@ public class Detector {
                     trainClassifiers(false);
                     evaluateClassifiersPerCluster(printEvaResults, showProgress);
                 }
-                for (DetectorCluster cluster : clusters) {
+                for (DetectorClusterService cluster : clusters) {
                     cluster.printStrEvaluation();
                 }
             }
-            //sample
+
             Instance evaluatingPeer = testInstancesNoLabel.get(instIndex);
             int clusterNum = kmeans.clusterInstance(evaluatingPeer);
             ArrayList<DetectorClassifier> selectedClassifiers = clusters[clusterNum].getSelectedClassifiers();
@@ -160,7 +166,7 @@ public class Detector {
                 for (int classifIndex = 0; classifIndex < qtdClassificadores; classifIndex++) {
                     DetectorClassifier c = selectedClassifiers.get(classifIndex);
 
-                    double result = c.testSingle(instance); //CLASSIFICA
+                    double result = classifierService.testSingle(instance, c);
                     classifiersOutput[classifIndex][instIndex] = result;
 
                     // Se nao for o primeiro classificador, mas houverem mais de um selecionado
@@ -178,10 +184,10 @@ public class Detector {
 
                             // Converta o objeto ConselorsDTO para JSON
                             ObjectMapper mapper = new ObjectMapper();
-                            String jsonMessage = mapper.writeValueAsString(conselorsDTO);
-
+                           // String jsonMessage = mapper.writeValueAsString(conselorsDTO); RETIRADO POR ENQUANTO
+                            //kafkaTemplate.send("topic name",jsonMessage);
                             // Enviar a mensagem JSON para o tópico do Kafka usando o kafkaTemplate
-                            kafkaTemplate.send("network-topic", jsonMessage);
+                            kafkaTemplate.send(conselorsDTO);
 
                             double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress);
                             System.out.println("[Divergence Classifiers] Conflito n" + conflitos + " na instância " + instIndex + ", conselho: " + adviceResult + " / correto: " + correctValue);
@@ -221,16 +227,16 @@ public class Detector {
         return historicalData.get(timestamp);
     }
 
-    public DetectorCluster[] getClusters() {
+    public DetectorClusterService[] getClusters() {
         return clusters;
     }
 
-    public void setClusters(DetectorCluster[] clusters) {
+    public void setClusters(DetectorClusterService[] clusters) {
         this.clusters = clusters;
     }
 
     void selectClassifierPerCluster(boolean showProgress) throws Exception {
-        for (DetectorCluster cluster : clusters) {
+        for (DetectorClusterService cluster : clusters) {
             cluster.classifierSelection(showProgress);
         }
     }
@@ -240,9 +246,9 @@ public class Detector {
     }
 
     public void resetConters() {
-        for (DetectorCluster cluster : clusters) {
+        for (DetectorClusterService cluster : clusters) {
             for (DetectorClassifier classifier : cluster.getClassifiers()) {
-                classifier.resetConters();
+                classifierService.resetConters(classifier);
             }
         }
 
@@ -338,15 +344,13 @@ public class Detector {
         conflitos = conflitos + 1;
 
         // flag para validar se ha ou nao detectores para o detector solicitante (continua 77 em caso de nao haver)
-        double result = -77;// não existe retorno
+        double result = -77;
         /* REDE DE CONSELHOS */
-        if (enableAdvice) {// desconsiderar
+        if (enableAdvice) {
 //                            System.out.println("########## CONFLITO #########");
 //                            System.out.println("Classifier output:" + classifiersOutput[classifIndex][instIndex] + " vs " + classifiersOutput[classifIndex - 1][instIndex]);
-            if (advisors.length > 0) {// desconsiderar
-                for (Detector d : advisors) { // desconsiderar
-
-                    //
+            if (advisors.length > 0) {
+                for (Detector d : advisors) {
                     Advice advice = d.getAdvice(instIndex);
 //                                    System.out.println("Requesting conseil...");
 //                                    System.out.println("Advisors' response: " + advice.getAdvisorResult() + " (" + String.valueOf(advice.accuracy).substring(0, 5) + ")%, correct is: " + advice.correctResult + "(Good Adivices: " + getGoodAdvices() + ")");
@@ -420,8 +424,8 @@ public class Detector {
         System.out.println("------------------------------------------------------------------------");
         System.out.println("  --  Evaluation");
         System.out.println("------------------------------------------------------------------------");
-        for (DetectorCluster d : getClusters()) {
-            System.out.println("\n---- Cluster " + d.clusterNum + ":");
+        for (DetectorClusterService d : getClusters()) {
+            System.out.println("\n---- Cluster " + d.getClusterNum() + ":");
             for (DetectorClassifier c : d.getClassifiers()) {
                 if (c.isSelected()) {
                     System.out.println("[X]" + c.getName()
@@ -452,12 +456,12 @@ public class Detector {
     }
 
     public void printTestResults() {
-        for (DetectorCluster d : getClusters()) {
-            System.out.println("---- Cluster " + d.clusterNum + ":");
+        for (DetectorClusterService d : getClusters()) {
+            System.out.println("---- Cluster " + d.getClusterNum() + ":");
             for (DetectorClassifier c : d.getClassifiers()) {
                 if (c.isSelected()) {
                     System.out.println("[X]" + c.getName()
-                            + " - " + c.getTestF1Score() // antes era + " - " + c.getTestAccuracy()
+                            + " - " + classifierService.getTestF1Score(c) // antes era + " - " + c.getTestAccuracy()
                             + " (VP;VN;FP;FN) = "
                             + "("
                             + c.getVP()
