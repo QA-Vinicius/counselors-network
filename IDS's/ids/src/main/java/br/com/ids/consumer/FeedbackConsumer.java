@@ -1,6 +1,7 @@
 package br.com.ids.consumer;
 
 import br.com.ids.dto.ConselorsDTO;
+import br.com.ids.service.FeedbackService;
 import br.com.ids.service.GenerateAdviceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -12,23 +13,25 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class KafkaAdviceConsumer {
+public class FeedbackConsumer {
 
     @Autowired
-    private GenerateAdviceService adviceService;
+    private FeedbackService feedbackService;
 
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
-    @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup", containerFactory = "jsonKafkaListenerContainer")
-    public void consume(ConsumerRecord<String, ConselorsDTO> record){
+    @KafkaListener(topics = {"FEEDBACK_TOPIC"}, groupId = "myGroup", containerFactory = "jsonKafkaListenerContainer")
+    public void consumeFeedBack(ConsumerRecord<String, ConselorsDTO> record){
         logg.info("Received Message " + record.value());
         final var time = System.currentTimeMillis();
         if(record.value().getId_conselheiro() != 1){
+            for(int i=0;i<10;i++){
                 try{
-                    adviceService.generatesAdvice(record.value());
+                    feedbackService.sendFeedback(record.value());
                 }catch(Exception ex){
                     throw ex;
                 }
+            }
         }
     }
 }

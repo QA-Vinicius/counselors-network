@@ -7,9 +7,6 @@ import org.springframework.stereotype.Service;
 public class GenerateAdviceService {
     public void generatesAdvice(ConselorsDTO conselorsDTO){ //o cara QUER CONSELHO  IDS-2
         // Gerar conselho
-
-
-
         /*Aplicar o Kmeans  weka.clusterers.SimpleKMeans.clusterInstance
         *   A partir de features analisadas em conselho(sample)
         *       int cluster = kmeans.cluster(sample)
@@ -18,10 +15,11 @@ public class GenerateAdviceService {
         *       avaliar respostas dos classificadores, e seguir com a resposta majoritaria
         *       kafka.send.(resposta)
         * */
+    }
 
-
-
-
+    public void sendAdvice(){
 
     }
+
+
 }
