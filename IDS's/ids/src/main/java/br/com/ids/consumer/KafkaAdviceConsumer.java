@@ -34,4 +34,18 @@ public class KafkaAdviceConsumer {
         }
     }
 
+    @KafkaListener(topics = {"FEEDBACK_TOPIC"}, groupId = "myGroup", containerFactory = "jsonKafkaListenerContainer")
+    public void consume(ConsumerRecord<String, ConselorsDTO> record){
+        logg.info("Received Message " + record.value());
+        final var time = System.currentTimeMillis();
+        if(record.value().getId_conselheiro() != 1){
+            for(int i=0;i<10;i++){
+                try{
+                    feedbackService.sendFeedback5(record.value());
+                }catch(Exception ex){
+                    throw ex;
+                }
+            }
+        }
+    }
 }
