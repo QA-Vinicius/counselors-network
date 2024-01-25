@@ -6,6 +6,7 @@
 package br.com.ids.domain;
 
 import br.com.ids.dto.ConselorsDTO;
+import br.com.ids.enuns.AdviceEnum;
 import br.com.ids.producer.KafkaAdviceProducer;
 import br.com.ids.service.ClassifierService;
 import br.com.ids.service.DetectorClusterService;
@@ -115,7 +116,7 @@ public class Detector {
 
     }
 
-    public void clusterAndTestSample(boolean enableAdvice, boolean learnWithAdvice, boolean learnWithoutAdvices, boolean printEvaResults, boolean showProgress, int[] features) throws Exception {
+    public void clusterAndTestSample(boolean enableAdvice, boolean learnWithAdvice, boolean learnWithoutAdvices, boolean printEvaResults, boolean showProgress, int[] features, AdviceEnum adviceEnum) throws Exception {
         // Calculando teste
 //        int maxSizeTrain = 10000;
         boolean csv = true;
@@ -175,7 +176,7 @@ public class Detector {
                         if (classifiersOutput[classifIndex][instIndex] != classifiersOutput[classifIndex - 1][instIndex]) {
                             ConselorsDTO conselorsDTO = ConselorsDTO.builder()
                                 .id_conselheiro(detectorID)
-                                .flag("request")
+                                .flag(adviceEnum.toString())// marca se é pedido de concelho ou não
                                 .features(features)
                                 .sample(instIndex)
                                 .f1score(c.getEvaluationF1Score())

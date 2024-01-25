@@ -2,6 +2,7 @@ package br.com.ids;
 
 import br.com.ids.domain.Detector;
 import br.com.ids.domain.DetectorClassifier;
+import br.com.ids.enuns.AdviceEnum;
 import br.com.ids.service.DetectorClusterService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -24,17 +25,25 @@ public class IntusionDetectionApplication {
 		KafkaTemplate<String, String> kafkaTemplate = context.getBean(KafkaTemplate.class);
 		int[] oneR_Detector1 = new int[]{34, 48, 19, 12, 53}; //79, 40, 68, 13, 55
 
-		// Incia eta de treino e dataSets
-		/* Detector 1*/
+		/*
+		* Nesta etapa instanciamos o primeiro Detector e seus respectivos dataSets de treino, avaliação e testes
+		* essa etapa deve ser iniciada ao instanciar um IDS
+		* */
 		Instances trainInstances = wekaMain.leadAndFilter(false, "1output1k.csv", oneR_Detector1);
 		Instances evaluationInstances = wekaMain.leadAndFilter(false, "2output1k.csv", oneR_Detector1);
 		Instances testInstances = wekaMain.leadAndFilter(false, "3output1k.csv", oneR_Detector1);
 
 		Detector D1 = new Detector(1, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS, kafkaTemplate);
+
+		// Instancia a quantidade  clusters
 		D1.createClusters(5, 2);
-		System.out.println(
-				"\n######## Detector 1");
+
+		System.out.println("\n######## Detector 1");
+
+		// Zera todas as variaveis para avaliação
 		D1.resetConters();
+
+		//Treina seus classificadores com o dataset de treino
 		D1 = trainEvaluateAndTest(D1, false, false, true, true, oneR_Detector1);
 	}
 
@@ -50,7 +59,7 @@ public class IntusionDetectionApplication {
 		D1.evaluateClassifiersPerCluster(printEvaluation, showProgress);
 
 		/* Test Phase */
-		D1.clusterAndTestSample(advices, true, true, printEvaluation, showProgress, features);
+		D1.clusterAndTestSample(advices, true, true, printEvaluation, showProgress, features, AdviceEnum.REQUEST_ADVICE);
 
 //        int VP = 0;
 //        int VN = 0;
@@ -85,6 +94,7 @@ public class IntusionDetectionApplication {
 
 		return D1;
 	}
+
 	public Instances leadAndFilter(boolean printSelection, String file, int[] featureSelection) throws Exception {
 		Instances instances = new Instances(readDataFile(file));
 		if (featureSelection.length > 0) {
