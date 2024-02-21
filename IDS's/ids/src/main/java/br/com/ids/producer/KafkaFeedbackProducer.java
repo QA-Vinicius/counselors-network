@@ -22,7 +22,7 @@ public class KafkaFeedbackProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void send(ConselorsDTO data){
+    public void sendFeedback(ConselorsDTO data){
         kafkaTemplate.send(topic, data);
-    } //adaptar para enviar apenas feedback informando se agregou ou nao o conselho
+    }
 }

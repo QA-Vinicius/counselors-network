@@ -33,6 +33,12 @@ public class ConselorsDTO {
     @JsonProperty("timestamp")
     private long timestamp;
 
+    @JsonProperty("feedback")
+    private String feedback; //positive or negative
+
+    @JsonProperty("feedback")
+    private double deltaF1Score;
+
     public ConselorsDTO() {
     }
 

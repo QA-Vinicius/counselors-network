@@ -20,7 +20,7 @@ public class KafkaAdviceConsumer {
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
     @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup", containerFactory = "jsonKafkaListenerContainer")
-    public void consume(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
+    public void consumer(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
         logg.info("Received Message " + record.value());
         final var time = System.currentTimeMillis();
         if(record.value().getId_conselheiro() != 1){

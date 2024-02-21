@@ -16,12 +16,12 @@ import java.io.FileReader;
 import java.util.Arrays;
 
 @SpringBootApplication
-public class IntusionDetectionApplication {
+public class IntrusionDetectionApplication {
 	static final String NORMAL_CLASS = "BENIGN";
 	public static void main(String[] args) throws Exception {
 
-		ConfigurableApplicationContext context = SpringApplication.run(IntusionDetectionApplication.class, args);
-		IntusionDetectionApplication wekaMain = new IntusionDetectionApplication();
+		ConfigurableApplicationContext context = SpringApplication.run(IntrusionDetectionApplication.class, args);
+		IntrusionDetectionApplication wekaMain = new IntrusionDetectionApplication();
 		KafkaTemplate<String, String> kafkaTemplate = context.getBean(KafkaTemplate.class);
 		int[] oneR_Detector1 = new int[]{34, 48, 19, 12, 53}; //79, 40, 68, 13, 55
 

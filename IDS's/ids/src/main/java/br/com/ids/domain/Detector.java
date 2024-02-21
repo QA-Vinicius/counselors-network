@@ -161,7 +161,7 @@ public class Detector {
 
             /* Se o classificador for selecionado, classificar com ele */
             if (qtdClassificadores == 0) {
-                double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress);
+                double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress, features, adviceEnum);
                 System.out.println("[No Classifiers] Conflito n" + conflitos + " na instância " + instIndex + ", conselho: " + adviceResult + " / correto: " + correctValue);
             } else {
                 for (int classifIndex = 0; classifIndex < qtdClassificadores; classifIndex++) {
@@ -176,7 +176,7 @@ public class Detector {
                         if (classifiersOutput[classifIndex][instIndex] != classifiersOutput[classifIndex - 1][instIndex]) {
                             ConselorsDTO conselorsDTO = ConselorsDTO.builder()
                                 .id_conselheiro(detectorID)
-                                .flag(adviceEnum.toString())// marca se é pedido de concelho ou não
+                                .flag(adviceEnum.toString()) //identifica a msg como conselho ou pedido
                                 .features(features)
                                 .sample(instIndex)
                                 .f1score(c.getEvaluationF1Score())
@@ -190,7 +190,7 @@ public class Detector {
                             // Enviar a mensagem JSON para o tópico do Kafka usando o kafkaTemplate
                             kafkaTemplate.send(conselorsDTO);
 
-                            double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress);
+                            double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress, features, adviceEnum);
                             System.out.println("[Divergence Classifiers] Conflito n" + conflitos + " na instância " + instIndex + ", conselho: " + adviceResult + " / correto: " + correctValue);
                         }
                         /* Se esse for o ultimo classificador da lista, é porque nao ocorreram conflitos*/
@@ -340,7 +340,7 @@ public class Detector {
     }
 
     private double handleConflict(boolean enableAdvice, double correctValue,
-            int instIndex, Instance instance, boolean learnWithAdvice, Instance evaluatingPeer, boolean printEvaResu, boolean showProgress) throws Exception {
+            int instIndex, Instance instance, boolean learnWithAdvice, Instance evaluatingPeer, boolean printEvaResu, boolean showProgress, int[] features, AdviceEnum adviceEnum) throws Exception {
         historicalData.add(new Advice(0, -77, correctValue, normalClass));
         conflitos = conflitos + 1;
 
@@ -366,6 +366,21 @@ public class Detector {
                     }
                     if (advice.getAdvisorResult() == correctValue) {
                         goodAdvices = goodAdvices + 1;
+
+                        ConselorsDTO conselorsDTO = ConselorsDTO.builder()
+                                .id_conselheiro(detectorID)
+                                .flag(String.valueOf(adviceEnum.FEEDBACK)) //diferencia o feedback de um conselho
+                                .features(features)
+                                .sample(instIndex)
+                                .timestamp(System.currentTimeMillis())
+                                .feedback("Positive")
+                                .build();
+
+                        // Converta o objeto ConselorsDTO para JSON
+                        ObjectMapper mapper = new ObjectMapper();
+
+                        kafkaTemplate.send(conselorsDTO);
+
                         System.out.println("FEEDBACK POSITIVO\n");
 //                                        System.out.println("Class: " + advice.getClassNormal());
                         if (advice.getClassNormal().equals(normalClass)) {

@@ -6,6 +6,7 @@ import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.enuns.AdviceEnum;
 import br.com.ids.producer.KafkaAdviceProducer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import weka.core.Instances;
 
@@ -24,7 +25,7 @@ public class GenerateAdviceService {
     }
 
 
-    public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception { //o cara QUER CONSELHO  IDS-2
+    public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception { //responsavel por gerar um conselho para o IDS1
         // Gerar conselho
         /*Aplicar o Kmeans  weka.clusterers.SimpleKMeans.clusterInstance
         *   A partir de features analisadas em conselho(sample)
