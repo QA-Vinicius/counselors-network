@@ -6,11 +6,10 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.support.converter.JsonMessageConverter;
+import org.springframework.kafka.support.converter.ByteArrayJsonMessageConverter;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
@@ -24,20 +23,20 @@ public class KafkaConsumerConfig {
 
     @Bean
     public ConsumerFactory consumerConfig() {
-        Map<String, Object> properties = new HashMap<String, Object>();
+        Map<String, Object> properties = new HashMap<>();
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapserver);
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        return new DefaultKafkaConsumerFactory<>(properties, new StringDeserializer(),new JsonDeserializer<>(ConselorsDTO.class)
+        return new DefaultKafkaConsumerFactory<>(properties, new StringDeserializer(), new JsonDeserializer<>(ConselorsDTO.class)
                 .trustedPackages("*")
                 .forKeys());
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory jsonKafkaListenerContainer(){
+    public ConcurrentKafkaListenerContainerFactory jsonKafkaListenerContainer() {
         var containerFactory = new ConcurrentKafkaListenerContainerFactory();
         containerFactory.setConsumerFactory(consumerConfig());
-        containerFactory.setMessageConverter(new JsonMessageConverter());
+        containerFactory.setMessageConverter(new ByteArrayJsonMessageConverter());
         return containerFactory;
     }
 

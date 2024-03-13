@@ -1,8 +1,11 @@
 package br.com.ids.service;
 
 import br.com.ids.dto.ConselorsDTO;
+import org.springframework.stereotype.Service;
 
+@Service
 public class FeedbackService {
+
     public void learnAndRetrain(ConselorsDTO value) {
         /* Logica adotada pelo conselheiro que solicitou o conselho.
         *

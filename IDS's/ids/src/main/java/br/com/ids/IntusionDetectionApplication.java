@@ -2,6 +2,7 @@ package br.com.ids;
 
 import br.com.ids.domain.Detector;
 import br.com.ids.domain.DetectorClassifier;
+import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.enuns.AdviceEnum;
 import br.com.ids.service.DetectorClusterService;
 import org.springframework.boot.SpringApplication;
@@ -16,19 +17,19 @@ import java.io.FileReader;
 import java.util.Arrays;
 
 @SpringBootApplication
-public class IntrusionDetectionApplication {
+public class IntusionDetectionApplication {
 	static final String NORMAL_CLASS = "BENIGN";
 	public static void main(String[] args) throws Exception {
 
-		ConfigurableApplicationContext context = SpringApplication.run(IntrusionDetectionApplication.class, args);
-		IntrusionDetectionApplication wekaMain = new IntrusionDetectionApplication();
-		KafkaTemplate<String, String> kafkaTemplate = context.getBean(KafkaTemplate.class);
+		ConfigurableApplicationContext context = SpringApplication.run(IntusionDetectionApplication.class, args);
+		IntusionDetectionApplication wekaMain = new IntusionDetectionApplication();
+		KafkaTemplate<String, ConselorsDTO> kafkaTemplate = context.getBean(KafkaTemplate.class);
 		int[] oneR_Detector1 = new int[]{34, 48, 19, 12, 53}; //79, 40, 68, 13, 55
 
 		/*
-		* Nesta etapa instanciamos o primeiro Detector e seus respectivos dataSets de treino, avaliação e testes
-		* essa etapa deve ser iniciada ao instanciar um IDS
-		* */
+		 * Nesta etapa instanciamos o primeiro Detector e seus respectivos dataSets de treino, avaliação e testes
+		 * essa etapa deve ser iniciada ao instanciar um IDS
+		 * */
 		Instances trainInstances = wekaMain.leadAndFilter(false, "1output1k.csv", oneR_Detector1);
 		Instances evaluationInstances = wekaMain.leadAndFilter(false, "2output1k.csv", oneR_Detector1);
 		Instances testInstances = wekaMain.leadAndFilter(false, "3output1k.csv", oneR_Detector1);

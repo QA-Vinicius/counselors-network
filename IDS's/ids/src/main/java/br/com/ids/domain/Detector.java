@@ -26,7 +26,7 @@ import java.util.ArrayList;
 public class Detector {
 
     // Variaveis para construcao do JSON a ser publicado
-    @Autowired
+    @Autowired(required = true)
     private KafkaAdviceProducer kafkaTemplate;
     int detectorID; // id de cada conselheiro
 
@@ -48,9 +48,10 @@ public class Detector {
     ArrayList<Advice> historicalData = new ArrayList<>();
     String strTestAcc = "";
 
+    @Autowired(required = true)
     ClassifierService classifierService;
 
-    public Detector(int detectorID, Instances trainInstances, Instances evaluationInstances, Instances testInstances, String normalClass, KafkaTemplate<String, String> kafkaTemplate) {
+    public Detector(int detectorID, Instances trainInstances, Instances evaluationInstances, Instances testInstances, String normalClass, KafkaTemplate<String, ConselorsDTO> kafkaTemplate) {
         this.detectorID = detectorID;
         this.trainInstances = trainInstances;
         this.evaluationInstances = evaluationInstances;

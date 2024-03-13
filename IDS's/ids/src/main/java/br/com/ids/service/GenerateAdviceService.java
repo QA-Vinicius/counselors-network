@@ -4,7 +4,6 @@ import br.com.ids.domain.Detector;
 import br.com.ids.domain.DetectorClassifier;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.enuns.AdviceEnum;
-import br.com.ids.producer.KafkaAdviceProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -18,8 +17,8 @@ import java.util.Arrays;
 @Service
 public class GenerateAdviceService {
 
-    @Autowired
-    private KafkaAdviceProducer kafkaTemplate;
+    @Autowired(required = true)
+    private KafkaTemplate<String, ConselorsDTO> kafkaTemplate;
 
     public GenerateAdviceService() {
     }
@@ -39,7 +38,7 @@ public class GenerateAdviceService {
         Instances evaluationInstances = leadAndFilter(false, "2output1k.csv", conselorsDTO.getFeatures());
         Instances testInstances = leadAndFilter(false, "3output1k.csv", conselorsDTO.getFeatures());
         Detector d1 = new Detector(1, trainInstances, evaluationInstances, testInstances, "BENIGN",kafkaTemplate);
-        d1.createClusters(2, 2);
+        d1.createClusters(5, 2);
         d1.resetConters();
         d1 = trainEvaluateAndTest(d1, false, false, true, true, conselorsDTO.getFeatures());
     }
