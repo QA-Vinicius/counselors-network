@@ -33,6 +33,8 @@ public class GenerateAdviceService {
         *       avaliar respostas dos classificadores, e seguir com a resposta majoritaria
         *       kafka.send.(resposta)
         * */
+
+
         Instances trainInstances = leadAndFilter(false, "1output1k.csv", conselorsDTO.getFeatures());
         Instances evaluationInstances = leadAndFilter(false, "2output1k.csv", conselorsDTO.getFeatures());
         Instances testInstances = leadAndFilter(false, "3output1k.csv", conselorsDTO.getFeatures());
@@ -40,6 +42,10 @@ public class GenerateAdviceService {
 //        d1.createClusters(5, 2);
 //        d1.resetConters();
 //        d1 = trainEvaluateAndTest(d1, false, false, true, true, conselorsDTO.getFeatures());
+    }
+
+    public void learnWithAdvice(ConselorsDTO conselorsDTO) {
+
     }
 
     private static Detector trainEvaluateAndTest(Detector D1, boolean printEvaluation, boolean printTrain, boolean advices, boolean showProgress, int[] features) throws Exception {

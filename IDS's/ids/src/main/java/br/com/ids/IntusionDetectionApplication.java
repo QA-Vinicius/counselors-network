@@ -4,6 +4,7 @@ import br.com.ids.domain.Detector;
 import br.com.ids.domain.DetectorClassifier;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.enuns.AdviceEnum;
+import br.com.ids.producer.KafkaAdviceProducer;
 import br.com.ids.service.DetectorClusterService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -24,6 +25,7 @@ public class IntusionDetectionApplication {
 		ConfigurableApplicationContext context = SpringApplication.run(IntusionDetectionApplication.class, args);
 		IntusionDetectionApplication wekaMain = new IntusionDetectionApplication();
 		KafkaTemplate<String, ConselorsDTO> kafkaTemplate = context.getBean(KafkaTemplate.class);
+		KafkaAdviceProducer kafkaAdviceProducer = context.getBean(KafkaAdviceProducer.class);
 		int[] oneR_Detector1 = new int[]{34, 48, 19, 12, 53}; //79, 40, 68, 13, 55
 
 		/*
@@ -34,7 +36,7 @@ public class IntusionDetectionApplication {
 		Instances evaluationInstances = wekaMain.leadAndFilter(false, "2output1k.csv", oneR_Detector1);
 		Instances testInstances = wekaMain.leadAndFilter(false, "3output1k.csv", oneR_Detector1);
 
-		Detector D1 = new Detector(1, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS, kafkaTemplate);
+		Detector D1 = new Detector(kafkaAdviceProducer, 1, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS);
 
 		// Instancia a quantidade  clusters
 		D1.createClusters(5, 2);

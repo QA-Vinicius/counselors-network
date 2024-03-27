@@ -10,20 +10,19 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class KafkaAdviceProducer {
+public class KafkaFeedbackProducer {
 
     private final String topic;
-    private final Logger logg = LoggerFactory.getLogger(KafkaAdviceProducer.class);
-
+    private final Logger logg = LoggerFactory.getLogger(KafkaFeedbackProducer.class);
     @Autowired
-    private KafkaTemplate<String, ConselorsDTO> kafkaTemplate;
+    private final KafkaTemplate<String, ConselorsDTO> kafkaTemplate;
 
-    public KafkaAdviceProducer(KafkaTemplate<String, ConselorsDTO> kafkaTemplate){
-        this.topic = "ADVICE_TOPIC";
+    public KafkaFeedbackProducer(KafkaTemplate<String, ConselorsDTO> kafkaTemplate){
+        this.topic = "FEEDBACK_TOPIC";
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void send(ConselorsDTO data){
+    public void sendFeedback(ConselorsDTO data){
         kafkaTemplate.send(topic, data);
     }
 }

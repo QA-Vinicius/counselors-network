@@ -21,11 +21,22 @@ public class FeedbackConsumer {
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
     @KafkaListener(topics = {"FEEDBACK_TOPIC"}, groupId = "myGroup", containerFactory = "jsonKafkaListenerContainer")
-    public void consumerFeedBack(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
+    public void consumerFeedBack(ConsumerRecord<String, ConselorsDTO> record){
         logg.info("Received Message " + record.value());
         final var time = System.currentTimeMillis();
         if(record.value().getId_conselheiro() == 1){
-            feedbackService.learnWithFeedback(record.value());
+            try{
+                feedbackService.learnAndRetrain(record.value());
+            }catch(Exception ex){
+                throw ex;
+            }
+        }
+        else {
+            try {
+                feedbackService.learnWithFeedback(record.value());
+            } catch (Exception ex) {
+                throw ex;
+            }
         }
     }
 }

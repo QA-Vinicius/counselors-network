@@ -180,7 +180,7 @@ public class Detector {
                                 .id_conselheiro(detectorID)
                                 .flag(adviceEnum.toString()) //identifica a msg como conselho ou pedido
                                 .features(features)
-                                .sample(instIndex)
+                                .sample(instance)
                                 .f1score(c.getEvaluationF1Score())
                                 .timestamp(System.currentTimeMillis())
                                 .build();
@@ -238,7 +238,7 @@ public class Detector {
         this.clusters = clusters;
     }
 
-    public void selectClassifierPerCluster(boolean showProgress) throws Exception {
+    void selectClassifierPerCluster(boolean showProgress) throws Exception {
         for (DetectorClusterService cluster : clusters) {
             cluster.classifierSelection(showProgress);
         }
@@ -373,7 +373,7 @@ public class Detector {
                                 .id_conselheiro(detectorID)
                                 .flag(String.valueOf(adviceEnum.FEEDBACK)) //diferencia o feedback de um conselho
                                 .features(features)
-                                .sample(instIndex)
+                                .sample(instance)
                                 .timestamp(System.currentTimeMillis())
                                 .feedback("Positive")
                                 .build();
