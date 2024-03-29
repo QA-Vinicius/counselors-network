@@ -180,7 +180,7 @@ public class Detector {
                                 .id_conselheiro(detectorID)
                                 .flag(adviceEnum.toString()) //identifica a msg como conselho ou pedido
                                 .features(features)
-                                .sample(instance)
+                                .sample(instIndex)
                                 .f1score(c.getEvaluationF1Score())
                                 .timestamp(System.currentTimeMillis())
                                 .build();
@@ -373,7 +373,7 @@ public class Detector {
                                 .id_conselheiro(detectorID)
                                 .flag(String.valueOf(adviceEnum.FEEDBACK)) //diferencia o feedback de um conselho
                                 .features(features)
-                                .sample(instance)
+                                .sample(instIndex)
                                 .timestamp(System.currentTimeMillis())
                                 .feedback("Positive")
                                 .build();

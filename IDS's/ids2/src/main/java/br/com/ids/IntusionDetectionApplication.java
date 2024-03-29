@@ -26,29 +26,31 @@ public class IntusionDetectionApplication {
 		IntusionDetectionApplication wekaMain = new IntusionDetectionApplication();
 		KafkaTemplate<String, ConselorsDTO> kafkaTemplate = context.getBean(KafkaTemplate.class);
 		KafkaAdviceProducer kafkaAdviceProducer = context.getBean(KafkaAdviceProducer.class);
-		int[] oneR_Detector1 = new int[]{34, 48, 19, 12, 53}; //79, 40, 68, 13, 55
-
+		int[] oneR_Detector2 = new int[]{34, 48, 19, 12, 53}; //79, 40, 68, 13, 55
+		
 		/*
 		 * Nesta etapa instanciamos o primeiro Detector e seus respectivos dataSets de treino, avaliação e testes
 		 * essa etapa deve ser iniciada ao instanciar um IDS
 		 * */
-		Instances trainInstances = wekaMain.leadAndFilter(false, "4output1.csv", oneR_Detector1);
-		Instances evaluationInstances = wekaMain.leadAndFilter(false, "5output1k.csv", oneR_Detector1);
-		Instances testInstances = wekaMain.leadAndFilter(false, "6output1k.csv", oneR_Detector1);
+		int detectorID = 2;
+		
+		Instances trainInstances = wekaMain.leadAndFilter(false, "4output1k.csv", oneR_Detector2);
+		Instances evaluationInstances = wekaMain.leadAndFilter(false, "5output1k.csv", oneR_Detector2);
+		Instances testInstances = wekaMain.leadAndFilter(false, "6output1k.csv", oneR_Detector2);
 
-		Detector D2 = new Detector(kafkaAdviceProducer, 2, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS);
+		Detector D2 = new Detector(kafkaAdviceProducer, detectorID, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS);
 
 
 		// Instancia a quantidade  clusters
 		D2.createClusters(5, 2);
 
-		System.out.println("\n######## Detector 1");
+		System.out.println("\n######## Detector "+detectorID+"");
 
 		// Zera todas as variaveis para avaliação
 		D2.resetConters();
 
 		//Treina seus classificadores com o dataset de treino
-		D2 = trainEvaluateAndTest(D2, false, false, true, true, oneR_Detector1);
+		D2 = trainEvaluateAndTest(D2, false, false, true, true, oneR_Detector2);
 	}
 
 	private static Detector trainEvaluateAndTest(Detector D2, boolean printEvaluation, boolean printTrain, boolean advices, boolean showProgress, int[] features) throws Exception {

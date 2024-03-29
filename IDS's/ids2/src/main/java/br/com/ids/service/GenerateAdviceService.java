@@ -20,6 +20,8 @@ public class GenerateAdviceService {
     @Autowired(required = true)
     private KafkaTemplate<String, ConselorsDTO> kafkaTemplate;
 
+    Detector detector;
+
     public GenerateAdviceService() {
     }
 
@@ -35,13 +37,10 @@ public class GenerateAdviceService {
         * */
 
 
-        Instances trainInstances = leadAndFilter(false, "1output1k.csv", conselorsDTO.getFeatures());
-        Instances evaluationInstances = leadAndFilter(false, "2output1k.csv", conselorsDTO.getFeatures());
-        Instances testInstances = leadAndFilter(false, "3output1k.csv", conselorsDTO.getFeatures());
-//        Detector d1 = new Detector(1, trainInstances, evaluationInstances, testInstances, "BENIGN", kafkaTemplate);
-//        d1.createClusters(5, 2);
-//        d1.resetConters();
-//        d1 = trainEvaluateAndTest(d1, false, false, true, true, conselorsDTO.getFeatures());
+//        DET.trainInstances.add(value.getSample());
+//        detector.trainClassifiers(false);
+//        detector.evaluateClassifiersPerCluster(true, false);
+//        detector.selectClassifierPerCluster(false);
     }
 
     public void learnWithAdvice(ConselorsDTO conselorsDTO) {

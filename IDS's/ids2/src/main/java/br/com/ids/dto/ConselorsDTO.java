@@ -24,7 +24,7 @@ public class ConselorsDTO {
     private int[] features;
 
     @JsonProperty("sample") // amostra/linha onde ocorreu o conflito
-    private Instance sample;
+    private int sample;
 
     @JsonProperty("f1score")
     private double f1score;

@@ -7,11 +7,14 @@ import br.com.ids.enuns.AdviceEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
 import weka.core.Instances;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 @Service
@@ -20,10 +23,12 @@ public class GenerateAdviceService {
     @Autowired(required = true)
     private KafkaTemplate<String, ConselorsDTO> kafkaTemplate;
 
+    Detector detector;
+
     public GenerateAdviceService() {
     }
 
-    public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception { //responsavel por gerar um conselho para o IDS1
+    public void generatesAdvice(ConselorsDTO value) throws Exception { //responsavel por gerar um conselho para o IDS1
         // Gerar conselho
         /*Aplicar o Kmeans  weka.clusterers.SimpleKMeans.clusterInstance
         *   A partir de features analisadas em conselho(sample)
@@ -33,14 +38,36 @@ public class GenerateAdviceService {
         *       avaliar respostas dos classificadores, e seguir com a resposta majoritaria
         *       kafka.send.(resposta)
         * */
-        Instances trainInstances = leadAndFilter(false, "1output1k.csv", conselorsDTO.getFeatures());
-        Instances evaluationInstances = leadAndFilter(false, "2output1k.csv", conselorsDTO.getFeatures());
-        Instances testInstances = leadAndFilter(false, "3output1k.csv", conselorsDTO.getFeatures());
-//        Detector d1 = new Detector(1, trainInstances, evaluationInstances, testInstances, "BENIGN", kafkaTemplate);
-//        d1.createClusters(5, 2);
-//        d1.resetConters();
-//        d1 = trainEvaluateAndTest(d1, false, false, true, true, conselorsDTO.getFeatures());
+
+        // Criando um array de atributos
+//        DenseInstance inst = generateInstance(value);
+
+//        detector.trainInstances.add(1);
+        detector.trainClassifiers(false);
+        detector.evaluateClassifiersPerCluster(true, false);
+        detector.selectClassifierPerCluster(false);
     }
+
+//    public static DenseInstance generateInstance(ConselorsDTO value) {
+//        ArrayList<Attribute> attributes = new ArrayList<> ();
+//        for (int i = 0; i < value.getSample().length; i++) {
+//            attributes.add(new Attribute("atributo" + i));
+//        }
+//
+//        // Criando uma instância com base nos atributos
+//        Instances dataset = new Instances("my_dataset", attributes  , 1);
+//        dataset.setClassIndex(dataset.numAttributes() - 1); // Definindo o índice da classe (último atributo)
+//
+//        // Criando a instância
+//        DenseInstance inst = new DenseInstance(value.getSample().length);
+//        inst.setDataset(dataset);
+//
+//        // Definindo os valores para a instância
+//        Arrays.stream(value.getSample()).forEach(it ->{
+//            int count = 0;
+//            inst.setValue(count++,it);} );
+//        return inst;
+//    }
 
     private static Detector trainEvaluateAndTest(Detector D1, boolean printEvaluation, boolean printTrain, boolean advices, boolean showProgress, int[] features) throws Exception {
         /* Train Phase*/

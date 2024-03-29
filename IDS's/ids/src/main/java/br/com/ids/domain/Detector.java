@@ -12,12 +12,13 @@ import br.com.ids.service.ClassifierService;
 import br.com.ids.service.DetectorClusterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.core.KafkaTemplate;
 import weka.clusterers.SimpleKMeans;
+import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  *
@@ -42,7 +43,6 @@ public class Detector {
     int conflitos = 0;
     int goodAdvices = 0;
     String normalClass;
-    Detector[] advisors;
     boolean saveTrainInsance = true; // Ponteiro para dividir entre treino e validação
     ArrayList<Advice> historicalData = new ArrayList<>();
     String strTestAcc = "";
@@ -57,11 +57,9 @@ public class Detector {
         this.evaluationInstances = evaluationInstances;
         this.evaluationInstancesNoLabel = new Instances(evaluationInstances);
         evaluationInstancesNoLabel.deleteAttributeAt(evaluationInstancesNoLabel.numAttributes() - 1);
-        this.testInstances = testInstances;
-        this.testInstancesNoLabel = new Instances(testInstances);
+        this.testInstances = testInstances;       this.testInstancesNoLabel = new Instances(testInstances);
         testInstancesNoLabel.deleteAttributeAt(testInstancesNoLabel.numAttributes() - 1);
         this.testInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
-        this.advisors = new Detector[0];
         this.normalClass = normalClass;
         this.kafkaAdviceProducer = kafkaAdviceProducer;
     }
@@ -172,6 +170,8 @@ public class Detector {
                     double result = c.testSingle(instance);
                     classifiersOutput[classifIndex][instIndex] = result;
 
+                    System.out.println("Evaluation Peer Instance: " + evaluatingPeer);
+
                     // Se nao for o primeiro classificador, mas houverem mais de um selecionado
                     if (classifIndex > 0 && classifIndex < qtdClassificadores - 1 && selectedClassifiers.size() > 1) {
                         // Checa conflito com o anterior
@@ -180,7 +180,7 @@ public class Detector {
                                 .id_conselheiro(detectorID)
                                 .flag(adviceEnum.toString()) //identifica a msg como conselho ou pedido
                                 .features(features)
-                                .sample(instIndex)
+                                .sample(1)//(Arrays.stream(evaluatingPeer.toDoubleArray()).toArray())
                                 .f1score(c.getEvaluationF1Score())
                                 .timestamp(System.currentTimeMillis())
                                 .build();
@@ -343,79 +343,73 @@ public class Detector {
 
     private double handleConflict(boolean enableAdvice, double correctValue,
             int instIndex, Instance instance, boolean learnWithAdvice, Instance evaluatingPeer, boolean printEvaResu, boolean showProgress, int[] features, AdviceEnum adviceEnum) throws Exception {
-        historicalData.add(new Advice(0, -77, correctValue, normalClass));
+        historicalData.add(new Advice(0, 6, correctValue, normalClass));
         conflitos = conflitos + 1;
 
         // flag para validar se ha ou nao detectores para o detector solicitante (continua 77 em caso de nao haver)
-        double result = -77;
+        double result = 6;
         /* REDE DE CONSELHOS */
         if (enableAdvice) {
-//                            System.out.println("########## CONFLITO #########");
-//                            System.out.println("Classifier output:" + classifiersOutput[classifIndex][instIndex] + " vs " + classifiersOutput[classifIndex - 1][instIndex]);
-            if (advisors.length > 0) {
-                for (Detector d : advisors) {
-                    Advice advice = d.getAdvice(instIndex);
+//            System.out.println("########## CONFLITO #########");
+//            System.out.println("Classifier output:" + classifiersOutput[classifIndex][instIndex] + " vs " + classifiersOutput[classifIndex - 1][instIndex]);
+
+           //Consumer do RequestAdvice
+                Advice advice = getAdvice(instIndex);
 //                                    System.out.println("Requesting conseil...");
 //                                    System.out.println("Advisors' response: " + advice.getAdvisorResult() + " (" + String.valueOf(advice.accuracy).substring(0, 5) + ")%, correct is: " + advice.correctResult + "(Good Adivices: " + getGoodAdvices() + ")");
-                    result = advice.getAdvisorResult();
-                    instance.setClassValue(result);
-                    if (learnWithAdvice) {
-                        trainInstances.add(instance); // Realimenta a cada conselho
-                        /* Treina Todos Classificadores Novamente */
-                        trainClassifiers(false);
-                        evaluateClassifiersPerCluster(printEvaResu, showProgress);
-                        selectClassifierPerCluster(showProgress);
-                    }
-                    if (advice.getAdvisorResult() == correctValue) {
-                        goodAdvices = goodAdvices + 1;
+                result = advice.getAdvisorResult();
+                instance.setClassValue(result);
+            if (learnWithAdvice) {
+                trainInstances.add(instance); // Realimenta a cada conselho
+                /* Treina Todos Classificadores Novamente */
+                trainClassifiers(false);
+                evaluateClassifiersPerCluster(printEvaResu, showProgress);
+                selectClassifierPerCluster(showProgress);
+            }
+            if (advice.getAdvisorResult() == correctValue) {
+                goodAdvices = goodAdvices + 1;
 
-                        ConselorsDTO conselorsDTO = ConselorsDTO.builder()
-                                .id_conselheiro(detectorID)
-                                .flag(String.valueOf(adviceEnum.FEEDBACK)) //diferencia o feedback de um conselho
-                                .features(features)
-                                .sample(instIndex)
-                                .timestamp(System.currentTimeMillis())
-                                .feedback("Positive")
-                                .build();
+                ConselorsDTO conselorsDTO = ConselorsDTO.builder()
+                        .id_conselheiro(detectorID)
+                        .flag(String.valueOf(AdviceEnum.FEEDBACK)) //diferencia o feedback de um conselho
+                        .features(features)
+                        .sample(1)//(Arrays.stream(evaluatingPeer.toDoubleArray()).toArray()))
+                        .timestamp(System.currentTimeMillis())
+                        .feedback("Positive")
+                        .build();
 
-                        // Converta o objeto ConselorsDTO para JSON
-                        ObjectMapper mapper = new ObjectMapper();
+                // Converta o objeto ConselorsDTO para JSON
+                ObjectMapper mapper = new ObjectMapper();
 
-                        kafkaAdviceProducer.send(conselorsDTO);
+                kafkaAdviceProducer.send(conselorsDTO);
 
-                        System.out.println("FEEDBACK POSITIVO\n");
+                System.out.println("FEEDBACK POSITIVO\n");
 //                                        System.out.println("Class: " + advice.getClassNormal());
-                        if (advice.getClassNormal().equals(normalClass)) {
-                            VN = VN + 1;
-                        } else {
-                            VP = VP + 1;
-                        }
-                    } else {
-                        if (advice.getClassNormal().equals(normalClass)) {
-                            FP = FP + 1;
-                        } else {
-                            FN = FN + 1;
-                        }
-
-                    }
-
-                    if (learnWithAdvice) {
-                        if (saveTrainInsance) {
-                            trainInstances.add(instance); // Realimenta a cada amostra testada sem conflitos
-                            saveTrainInsance = false;
-//                                            System.out.println("Aprendeu com conflito [" + conflitos + "].");
-                        } else {
-                            evaluationInstances.add(instance);
-                            evaluationInstancesNoLabel.add(evaluatingPeer); // Realimenta a cada amostra testada sem conflitos
-                            saveTrainInsance = true;
-//                                            System.out.println("Aprendeu com conflito [" + conflitos + "].");
-                        }
-                    }
+                if (advice.getClassNormal().equals(normalClass)) {
+                    VN = VN + 1;
+                } else {
+                    VP = VP + 1;
                 }
             } else {
-                System.out.println("Ocorreu um conflito mas nao há conselheiros.");
+                if (advice.getClassNormal().equals(normalClass)) {
+                    FP = FP + 1;
+                } else {
+                    FN = FN + 1;
+                }
             }
 
+            if (learnWithAdvice) {
+                if (saveTrainInsance) {
+                    trainInstances.add(instance); // Realimenta a cada amostra testada sem conflitos
+                    saveTrainInsance = false;
+//                                            System.out.println("Aprendeu com conflito [" + conflitos + "].");
+                } else {
+                    evaluationInstances.add(instance);
+                    evaluationInstancesNoLabel.add(evaluatingPeer); // Realimenta a cada amostra testada sem conflitos
+                    saveTrainInsance = true;
+//                                            System.out.println("Aprendeu com conflito [" + conflitos + "].");
+                }
+            }
         }
         return result;
     }

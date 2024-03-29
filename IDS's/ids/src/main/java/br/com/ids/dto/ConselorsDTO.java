@@ -5,6 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import weka.core.Instance;
+import weka.core.Instances;
+
+import java.util.Arrays;
 
 @Builder
 @Setter

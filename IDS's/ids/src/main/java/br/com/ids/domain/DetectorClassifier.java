@@ -91,6 +91,7 @@ public class DetectorClassifier {
             }
 
             long evaluationTime = System.nanoTime() - currentTime;
+
             double recall = (float) ((getVP() * 100) / (getVP() + getFN()));
             double precision = (float) ((getVP() * 100) / (getVP() + getFP()));
             double f1Score = (float) (2 * (recall * precision) / (recall + precision));
