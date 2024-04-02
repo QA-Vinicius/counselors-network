@@ -19,6 +19,8 @@ import weka.core.Instances;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -154,6 +156,7 @@ public class Detector {
             }
 
             Instance evaluatingPeer = testInstancesNoLabel.get(instIndex);
+            double[] sample = evaluatingPeer.toDoubleArray();
             int clusterNum = kmeans.clusterInstance(evaluatingPeer);
             ArrayList<DetectorClassifier> selectedClassifiers = clusters[clusterNum].getSelectedClassifiers();
             int qtdClassificadores = selectedClassifiers.size();
@@ -170,8 +173,6 @@ public class Detector {
                     double result = c.testSingle(instance);
                     classifiersOutput[classifIndex][instIndex] = result;
 
-                    System.out.println("Evaluation Peer Instance: " + evaluatingPeer);
-
                     // Se nao for o primeiro classificador, mas houverem mais de um selecionado
                     if (classifIndex > 0 && classifIndex < qtdClassificadores - 1 && selectedClassifiers.size() > 1) {
                         // Checa conflito com o anterior
@@ -180,7 +181,7 @@ public class Detector {
                                 .id_conselheiro(detectorID)
                                 .flag(adviceEnum.toString()) //identifica a msg como conselho ou pedido
                                 .features(features)
-                                .sample(1)//(Arrays.stream(evaluatingPeer.toDoubleArray()).toArray())
+                                .sample(sample)//(Arrays.stream(evaluatingPeer.toDoubleArray()).toArray())
                                 .f1score(c.getEvaluationF1Score())
                                 .timestamp(System.currentTimeMillis())
                                 .build();
@@ -368,12 +369,12 @@ public class Detector {
             }
             if (advice.getAdvisorResult() == correctValue) {
                 goodAdvices = goodAdvices + 1;
-
+                double[] teste = {1.0, 2.0, 3.0, 4.0};
                 ConselorsDTO conselorsDTO = ConselorsDTO.builder()
                         .id_conselheiro(detectorID)
                         .flag(String.valueOf(AdviceEnum.FEEDBACK)) //diferencia o feedback de um conselho
                         .features(features)
-                        .sample(1)//(Arrays.stream(evaluatingPeer.toDoubleArray()).toArray()))
+                        .sample(teste)//(Arrays.stream(evaluatingPeer.toDoubleArray()).toArray()))
                         .timestamp(System.currentTimeMillis())
                         .feedback("Positive")
                         .build();

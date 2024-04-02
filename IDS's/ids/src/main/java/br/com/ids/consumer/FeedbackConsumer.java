@@ -23,9 +23,9 @@ public class FeedbackConsumer {
     @KafkaListener(topics = {"FEEDBACK_TOPIC"}, groupId = "myGroup", containerFactory = "jsonKafkaListenerContainer")
     public void consumerFeedBack(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
         logg.info("Received Message " + record.value());
-        final var time = System.currentTimeMillis();
-        if(record.value().getId_conselheiro() == 1){
-            feedbackService.learnWithFeedback(record.value());
-        }
+//        final var time = System.currentTimeMillis();
+//        if(record.value().getId_conselheiro() == 1){
+//            feedbackService.learnWithFeedback(record.value());
+//        }
     }
 }

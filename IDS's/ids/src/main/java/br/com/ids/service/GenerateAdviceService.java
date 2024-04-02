@@ -41,7 +41,7 @@ public class GenerateAdviceService {
 
         // Criando um array de atributos
 //        DenseInstance inst = generateInstance(value);
-
+        System.out.println("Amostra recebida: " + Arrays.toString(value.getSample()));
 //        detector.trainInstances.add(1);
         detector.trainClassifiers(false);
         detector.evaluateClassifiersPerCluster(true, false);
