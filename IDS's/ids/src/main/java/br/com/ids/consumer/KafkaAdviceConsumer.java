@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
+
 @Component
 @Slf4j
 public class KafkaAdviceConsumer {
@@ -25,10 +27,12 @@ public class KafkaAdviceConsumer {
         final var time = System.currentTimeMillis();
         if(record.value().getId_conselheiro() != 1){
                 try{
+                    System.out.println("CHEGUEI = " + record.value());
                     adviceService.generatesAdvice(record.value());
                 }catch(Exception ex){
                     throw ex;
                 }
         }
+        System.out.println("CHEGUEI = " + Arrays.toString(record.value().getSample()));
     }
 }

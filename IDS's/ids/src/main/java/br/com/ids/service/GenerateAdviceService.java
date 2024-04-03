@@ -4,11 +4,13 @@ import br.com.ids.domain.Detector;
 import br.com.ids.domain.DetectorClassifier;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.enuns.AdviceEnum;
+import br.com.ids.util.GenerateReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 
 import java.io.BufferedReader;
@@ -28,6 +30,7 @@ public class GenerateAdviceService {
     public GenerateAdviceService() {
     }
 
+    @SuppressWarnings("")
     public void generatesAdvice(ConselorsDTO value) throws Exception { //responsavel por gerar um conselho para o IDS1
         // Gerar conselho
         /*Aplicar o Kmeans  weka.clusterers.SimpleKMeans.clusterInstance
@@ -42,7 +45,10 @@ public class GenerateAdviceService {
         // Criando um array de atributos
 //        DenseInstance inst = generateInstance(value);
         System.out.println("Amostra recebida: " + Arrays.toString(value.getSample()));
-//        detector.trainInstances.add(1);
+        Instances instances = new Instances(GenerateReader.generateInstances(value.getSample()));
+        for (int i = 0; i<=instances.size(); i++) {
+            detector.trainInstances.add(instances.get(i));
+        }
         detector.trainClassifiers(false);
         detector.evaluateClassifiersPerCluster(true, false);
         detector.selectClassifierPerCluster(false);
