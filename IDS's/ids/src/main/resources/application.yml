@@ -16,6 +16,8 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.type.mapping: "br.com.ids.dto.ConselorsDTO.java"
-    topic: ADVICE_TOPIC
+    topic:
+      ADVICE_TOPIC
+      FEEDBACK
   main:
     allow-bean-definition-overriding: true
