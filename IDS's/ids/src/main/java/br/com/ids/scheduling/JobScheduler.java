@@ -37,8 +37,8 @@ public class JobScheduler {
     @Autowired
     private BeanFactory beanFactory;
 
-    @Scheduled(cron = "* 3 * * * *", zone = "America/Sao_Paulo")
-    public void startTrainig() throws Exception {
+    @Scheduled(cron = "0 */2 * * * *", zone = "America/Sao_Paulo")
+    public void startTraining() throws Exception {
         System.out.println("INICIANDO PROCEDIMENTO DE TREINO");
         KafkaTemplate<String, ConselorsDTO> kafkaTemplate = beanFactory.getBean(KafkaTemplate.class);
         KafkaAdviceProducer kafkaAdviceProducer = beanFactory.getBean(KafkaAdviceProducer.class);
