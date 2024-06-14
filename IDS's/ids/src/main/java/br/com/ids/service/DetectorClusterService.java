@@ -58,6 +58,7 @@ public class DetectorClusterService {
 
     public void evaluateClassifiers(Instances dataEvaluation) throws Exception {
         for (DetectorClassifier c : classifiers) {
+            System.out.println("\nAvaliaçao do Classificador: " + c.getName());
             c.resetAndEvaluate(dataEvaluation, clusteredInstancesIndex);
         }
     }

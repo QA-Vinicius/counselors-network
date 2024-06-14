@@ -107,6 +107,7 @@ public class Detector {
     }
 
     public void evaluateClassifiersPerCluster(boolean printEvaluation, boolean showProgress) throws Exception {
+        System.out.println("INICIANDO AVALIAÇÃO");
         for (DetectorClusterService cluster : clusters) {
             evaluationInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
             cluster.evaluateClassifiers(evaluationInstances);

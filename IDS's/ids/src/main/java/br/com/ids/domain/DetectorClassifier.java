@@ -76,7 +76,11 @@ public class DetectorClassifier {
         dataTest.setClassIndex(dataTest.numAttributes() - 1);
         for (int index = 0; index < clusteredInstances.size(); index++) {
             Instance instance = dataTest.get(index);
+            System.out.println("\t** DEBUG ERRO ARITMETICA");
+            System.out.println("\t\tInstancia classificador: " + classify(instance));
+            System.out.println("\t\tClassValue instance: " + instance.classValue());
             if (classify(instance) == instance.classValue()) {
+                System.out.println("\t\tInstancia: " + instance.stringValue(instance.attribute(instance.classIndex())));
                 if (instance.stringValue(instance.attribute(instance.classIndex())).equals(getNormalClass())) {
                     VN = VN + 1;
                 } else {
@@ -84,6 +88,7 @@ public class DetectorClassifier {
                 }
             } else {
                 if (instance.stringValue(instance.attribute(instance.classIndex())).equals(getNormalClass())) {
+                    System.out.println("\t\tInstancia: " + instance.stringValue(instance.attribute(instance.classIndex())));
                     FP = FP + 1;
                 } else {
                     FN = FN + 1;
@@ -92,15 +97,26 @@ public class DetectorClassifier {
 
             long evaluationTime = System.nanoTime() - currentTime;
 
-            double recall = (float) ((getVP() * 100) / (getVP() + getFN()));
-            double precision = (float) ((getVP() * 100) / (getVP() + getFP()));
-            double f1Score = (float) (2 * (recall * precision) / (recall + precision));
-            double accuracy = Float.valueOf(
-                    Float.valueOf((getVP() + getVN()) * 100)
-                            / Float.valueOf(getVP() + getVN() + getFP() + getFN()));
-            setEvaluationNanotime(evaluationTime);
-            setEvaluationAccuracy(accuracy);
-            setEvaluationF1Score(f1Score);
+            double f1Score;
+
+            try {
+                double recall = (float) ((getVP() * 100) / (getVP() + getFN()));
+                double precision = (float) ((getVP() * 100) / (getVP() + getFP()));
+                f1Score = (float) (2 * (recall * precision) / (recall + precision));
+                double accuracy = Float.valueOf(
+                        Float.valueOf((getVP() + getVN()) * 100)
+                                / Float.valueOf(getVP() + getVN() + getFP() + getFN()));
+                setEvaluationNanotime(evaluationTime);
+                setEvaluationAccuracy(accuracy);
+                setEvaluationF1Score(f1Score);
+            } catch (Exception e) {
+                f1Score = 0.0;
+                double accuracy = 0.0;
+
+                setEvaluationNanotime(evaluationTime);
+                setEvaluationAccuracy(accuracy);
+                setEvaluationF1Score(f1Score);
+            }
 
             // Armazene o F1-score da classe atual no vetor (vinicius)
             int classIndex = (int) instance.classValue();

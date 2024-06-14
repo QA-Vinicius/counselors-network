@@ -42,7 +42,7 @@ public class JobScheduler {
         System.out.println("INICIANDO PROCEDIMENTO DE TREINO");
         KafkaTemplate<String, ConselorsDTO> kafkaTemplate = beanFactory.getBean(KafkaTemplate.class);
         KafkaAdviceProducer kafkaAdviceProducer = beanFactory.getBean(KafkaAdviceProducer.class);
-        int[] oneR_Detector1 = new int[]{34, 48, 19, 12, 53, 40, 79}; //79, 40, 68, 13, 55
+        int[] oneR_Detector1 = new int[]{4, 48, 8, 12, 33, 40, 79}; //79, 40, 68, 13, 55
 
         /*
          * Nesta etapa instanciamos o primeiro Detector e seus respectivos dataSets de treino, avaliação e testes

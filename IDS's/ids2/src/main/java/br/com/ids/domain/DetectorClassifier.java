@@ -91,15 +91,27 @@ public class DetectorClassifier {
             }
 
             long evaluationTime = System.nanoTime() - currentTime;
-            double recall = (float) ((getVP() * 100) / (getVP() + getFN()));
-            double precision = (float) ((getVP() * 100) / (getVP() + getFP()));
-            double f1Score = (float) (2 * (recall * precision) / (recall + precision));
-            double accuracy = Float.valueOf(
-                    Float.valueOf((getVP() + getVN()) * 100)
-                            / Float.valueOf(getVP() + getVN() + getFP() + getFN()));
-            setEvaluationNanotime(evaluationTime);
-            setEvaluationAccuracy(accuracy);
-            setEvaluationF1Score(f1Score);
+
+            double f1Score;
+
+            try {
+                double recall = (float) ((getVP() * 100) / (getVP() + getFN()));
+                double precision = (float) ((getVP() * 100) / (getVP() + getFP()));
+                f1Score = (float) (2 * (recall * precision) / (recall + precision));
+                double accuracy = Float.valueOf(
+                        Float.valueOf((getVP() + getVN()) * 100)
+                                / Float.valueOf(getVP() + getVN() + getFP() + getFN()));
+                setEvaluationNanotime(evaluationTime);
+                setEvaluationAccuracy(accuracy);
+                setEvaluationF1Score(f1Score);
+            } catch (Exception e) {
+                f1Score = 0.0;
+                double accuracy = 0.0;
+
+                setEvaluationNanotime(evaluationTime);
+                setEvaluationAccuracy(accuracy);
+                setEvaluationF1Score(f1Score);
+            }
 
             // Armazene o F1-score da classe atual no vetor (vinicius)
             int classIndex = (int) instance.classValue();
