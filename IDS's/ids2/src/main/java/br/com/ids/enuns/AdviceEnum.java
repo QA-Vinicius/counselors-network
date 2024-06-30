@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum AdviceEnum {
-    REQUEST_ADVICE("REQUEST_ADVICE"), ADVICE("ADVICE"), FEEDBACK("FEEDBACK");
-    private final String enumIdentifier;
+    REQUEST_ADVICE(1), ADVICE(2), FEEDBACK(3);
+    private final int enumIdentifier;
 }

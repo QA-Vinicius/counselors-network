@@ -5,8 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import weka.core.Instance;
-import weka.core.Instances;
 
 @Builder
 @Setter
@@ -24,7 +22,7 @@ public class ConselorsDTO {
     private int[] features;
 
     @JsonProperty("sample") // amostra/linha onde ocorreu o conflito
-    private int sample;
+    private double[] sample;
 
     @JsonProperty("f1score")
     private double f1score;
@@ -44,4 +42,11 @@ public class ConselorsDTO {
     public ConselorsDTO() {
     }
 
+    public double[] getSample() {
+        return sample;
+    }
+
+    public void setSample(double[] sample) {
+        this.sample = sample;
+    }
 }

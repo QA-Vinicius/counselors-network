@@ -1,24 +1,21 @@
 package br.com.ids.service;
 
+import br.com.ids.domain.Detector;
 import br.com.ids.dto.ConselorsDTO;
 import org.springframework.stereotype.Service;
+import weka.core.Copyable;
+import weka.core.Instances;
 
 @Service
 public class FeedbackService {
 
-    public void learnAndRetrain(ConselorsDTO value) {
-        /* Logica adotada pelo conselheiro que solicitou o conselho.
-        *
-        * Com o conselho recebido, ele ira aprender e retreinar
-        * sua base de conhecimento
-        */
-    }
+    Detector detector;
 
-    public void learnWithFeedback(ConselorsDTO value) {
-        /* Logica adotada pelos outros conselheiros da rede
-        *
-        * Mesmo sem solicitar conselho, irao escutar e
-        * aprender para aprimorar sua base de conhecimento
-        */
+    public void learnWithFeedback(ConselorsDTO value) throws Exception {
+//        detector.trainInstances.add(GenerateAdviceService.generateInstance(value));
+        /* Treina Todos Classificadores Novamente */
+        detector.trainClassifiers(false);
+        detector.evaluateClassifiersPerCluster(true, false);
+        detector.selectClassifierPerCluster(false);
     }
 }

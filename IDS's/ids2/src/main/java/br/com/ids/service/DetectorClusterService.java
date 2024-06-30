@@ -44,6 +44,7 @@ public class DetectorClusterService {
     ArrayList<DetectorClassifier> selectedClassifiers;
 
     private ClassifierService classifierService;
+    private Instances trainInstances;
 
     public DetectorClusterService(int clusterNum) {
         this.clusteredInstancesIndex = new ArrayList<Integer>();
@@ -58,6 +59,7 @@ public class DetectorClusterService {
 
     public void evaluateClassifiers(Instances dataEvaluation) throws Exception {
         for (DetectorClassifier c : classifiers) {
+            System.out.println("\nAvaliaçao do Classificador: " + c.getName());
             c.resetAndEvaluate(dataEvaluation, clusteredInstancesIndex);
         }
     }
@@ -95,5 +97,13 @@ public class DetectorClusterService {
             dataTrain.setClassIndex(dataTrain.numAttributes() - 1);
             c.train(dataTrain, showTrainingTime);
         }
+    }
+
+    public Instances getTrainInstances() {
+        return this.trainInstances;
+    }
+
+    public void setTrainInstances(Instances trainInstances) {
+        this.trainInstances = trainInstances;
     }
 }

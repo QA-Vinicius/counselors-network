@@ -1,7 +1,7 @@
 package br.com.ids.consumer;
 
 import br.com.ids.dto.ConselorsDTO;
-import br.com.ids.enuns.AdviceEnum;
+import br.com.ids.scheduling.JobScheduler;
 import br.com.ids.service.GenerateAdviceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
 
 @Component
 @Slf4j
@@ -24,14 +26,11 @@ public class KafkaAdviceConsumer {
     public void consumer(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
         logg.info("Received Message " + record.value());
         final var time = System.currentTimeMillis();
-        if(record.value().getId_conselheiro() != 1){
+        System.out.println("\t\t ----------> Sended by counselor: " + record.value().getId_conselheiro());
+        if(record.value().getId_conselheiro() == 1){
                 try{
-                    if(record.value().getFlag().equals(AdviceEnum.REQUEST_ADVICE.toString())){
-                        adviceService.generatesAdvice(record.value());
-                    }
-                    if(record.value().getFlag().equals(AdviceEnum.ADVICE.toString())){
-                        adviceService.learnWithAdvice(record.value());
-                    }
+                    System.out.println("CHEGUEI = " + record.value());
+                    adviceService.generatesAdvice(record.value());
                 }catch(Exception ex){
                     throw ex;
                 }
