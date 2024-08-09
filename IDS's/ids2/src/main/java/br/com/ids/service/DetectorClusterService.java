@@ -19,8 +19,7 @@ import weka.core.Instances;
 import java.util.ArrayList;
 
 /**
- *
- * @author silvio
+ * @author vinicius
  */
 @Component
 @Getter

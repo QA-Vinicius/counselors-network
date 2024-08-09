@@ -63,6 +63,10 @@ public class DetectorClassifier {
         return classifier;
     }
 
+    public double classifyInstance(Instance instance) throws Exception {
+        return this.classifier.classifyInstance(instance);
+    }
+
     public Classifier resetAndEvaluate(Instances dataTest, ArrayList<Integer> clusteredInstances) throws Exception {
         //Inicializando vetor de f1-score com o numero de classes (vinicius)
         f1Scores = new double[dataTest.numClasses()];
@@ -76,11 +80,13 @@ public class DetectorClassifier {
         dataTest.setClassIndex(dataTest.numAttributes() - 1);
         for (int index = 0; index < clusteredInstances.size(); index++) {
             Instance instance = dataTest.get(index);
-            System.out.println("\t** DEBUG ERRO ARITMETICA");
-            System.out.println("\t\tInstancia classificador: " + classify(instance));
-            System.out.println("\t\tClassValue instance: " + instance.classValue());
+            // PRINTS PARA DEBUG
+//            System.out.println("\t** DEBUG ERRO ARITMETICA");
+//            System.out.println("\t\tInstancia classificador: " + classify(instance));
+//            System.out.println("\t\tClassValue instance: " + instance.classValue());
             if (classify(instance) == instance.classValue()) {
-                System.out.println("\t\tInstancia: " + instance.stringValue(instance.attribute(instance.classIndex())));
+                // PRINTS PARA DEBUG
+//                System.out.println("\t\tInstancia: " + instance.stringValue(instance.attribute(instance.classIndex())));
                 if (instance.stringValue(instance.attribute(instance.classIndex())).equals(getNormalClass())) {
                     VN = VN + 1;
                 } else {
@@ -88,7 +94,8 @@ public class DetectorClassifier {
                 }
             } else {
                 if (instance.stringValue(instance.attribute(instance.classIndex())).equals(getNormalClass())) {
-                    System.out.println("\t\tInstancia: " + instance.stringValue(instance.attribute(instance.classIndex())));
+                    // PRINTS PARA DEBUG
+//                    System.out.println("\t\tInstancia: " + instance.stringValue(instance.attribute(instance.classIndex())));
                     FP = FP + 1;
                 } else {
                     FN = FN + 1;

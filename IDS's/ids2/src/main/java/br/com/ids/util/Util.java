@@ -12,8 +12,7 @@ import weka.attributeSelection.ReliefFAttributeEval;
 import weka.core.Instances;
 
 /**
- *
- * @author silvio
+ * @author vinicius
  */
 public class Util {
 

@@ -6,8 +6,7 @@
 package br.com.ids.domain;
 
 /**
- *
- * @author silvio
+ * @author vinicius
  */
 public class Advice {
 

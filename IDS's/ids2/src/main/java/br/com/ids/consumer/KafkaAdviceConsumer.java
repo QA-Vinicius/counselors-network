@@ -27,13 +27,15 @@ public class KafkaAdviceConsumer {
         logg.info("Received Message " + record.value());
         final var time = System.currentTimeMillis();
         System.out.println("\t\t ----------> Sended by counselor: " + record.value().getId_conselheiro());
-        if(record.value().getId_conselheiro() == 1){
+        if(record.value().getId_conselheiro().equals("1")){
                 try{
                     System.out.println("CHEGUEI = " + record.value());
                     adviceService.generatesAdvice(record.value());
                 }catch(Exception ex){
                     throw ex;
                 }
+        } else {
+            System.out.println("Ignored Message from counselor: " + record.value().getId_conselheiro());
         }
     }
 }

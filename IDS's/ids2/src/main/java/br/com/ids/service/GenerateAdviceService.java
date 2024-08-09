@@ -20,7 +20,13 @@ public class GenerateAdviceService {
     @Autowired
     private JobScheduler jobScheduler;
 
+    //Metodo sera adaptado para o ids ao receber o conselho
     public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception {
+        jobScheduler.processNewSample(conselorsDTO);
+    }
+
+    //Metodo sera adaptado para o ids ao receber o conselho
+    public void processAdvice(ConselorsDTO conselorsDTO) throws Exception {
         jobScheduler.processNewSample(conselorsDTO);
     }
 

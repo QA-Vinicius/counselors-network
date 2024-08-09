@@ -30,7 +30,7 @@ public class Detector {
 
     // Variaveis para construcao do JSON a ser publicado
     private final KafkaAdviceProducer kafkaAdviceProducer;
-    int detectorID; // id de cada conselheiro
+    String detectorID; // id de cada conselheiro
 
     SimpleKMeans kmeans;
 
@@ -53,7 +53,7 @@ public class Detector {
     ClassifierService classifierService;
 
     @Autowired
-    public Detector(KafkaAdviceProducer kafkaAdviceProducer, int detectorID, Instances trainInstances, Instances evaluationInstances, Instances testInstances, String normalClass) {
+    public Detector(KafkaAdviceProducer kafkaAdviceProducer, String detectorID, Instances trainInstances, Instances evaluationInstances, Instances testInstances, String normalClass) {
         this.detectorID = detectorID;
         this.trainInstances = trainInstances;
         this.evaluationInstances = evaluationInstances;
@@ -65,21 +65,6 @@ public class Detector {
         this.normalClass = normalClass;
         this.kafkaAdviceProducer = kafkaAdviceProducer;
     }
-
-//    public Detector(int detectorID, Instances trainInstances, Instances evaluationInstances, Instances testInstances, Detector[] advisors, String normalClass, KafkaTemplate<String, String> kafkaTemplate) {
-//        this.detectorID = detectorID;
-//        this.trainInstances = trainInstances;
-//        this.evaluationInstances = evaluationInstances;
-//        this.evaluationInstancesNoLabel = new Instances(evaluationInstances);
-//        evaluationInstancesNoLabel.deleteAttributeAt(evaluationInstancesNoLabel.numAttributes() - 1);  // Removendo classe
-//        this.testInstances = testInstances;
-//        this.testInstancesNoLabel = new Instances(testInstances);;
-//        testInstancesNoLabel.deleteAttributeAt(testInstancesNoLabel.numAttributes() - 1);  // Removendo classe
-//        testInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
-//        this.advisors = advisors;
-//        this.normalClass = normalClass;
-////        this.kafkaTemplate = kafkaTemplate; // Atribuindo o kafkaTemplate recebido ao kafkaTemplate da classe
-//    }
 
     public void createClusters(int k, int seed) throws Exception {
         clusters = new DetectorClusterService[k];
@@ -104,6 +89,14 @@ public class Detector {
         for (DetectorClusterService cluster : clusters) {
             cluster.trainClassifiers(trainInstances, showTrainingTime);
         }
+    }
+
+    public void addInstance(Instance instance) {
+        trainInstances.add(instance);
+    }
+
+    public Instances getTrainInstances() {
+        return trainInstances;
     }
 
     public void evaluateClassifiersPerCluster(boolean printEvaluation, boolean showProgress) throws Exception {
@@ -497,5 +490,17 @@ public class Detector {
                 + getVP() + ";" + getVN() + ";" + getFP() + ";" + getFN() + ";" + String.valueOf(getDetectionF1Score()).replace(".", ","));
                 // antes era + getVP() + ";" + getVN() + ";" + getFP() + ";" + getFN() + ";" + String.valueOf(getDetectionAccuracy()).replace(".", ","));
         System.out.println("------------------------------------------------------------------------");
+    }
+
+    public double classifyInstance(Instance instance) throws Exception {
+        // Utilize o primeiro classificador da lista de selecionados para classificação
+        for (DetectorClusterService clusterService : this.clusters) {
+            for (DetectorClassifier classifier : clusterService.getClassifiers()) {
+                if (classifier.isSelected()) {
+                    return classifier.classifyInstance(instance);
+                }
+            }
+        }
+        throw new Exception("No classifier found to classify the instance.");
     }
 }

@@ -48,7 +48,7 @@ public class JobScheduler {
         startTraining();
     }
 
-    @Scheduled(cron = "0 */2 * * * *", zone = "America/Sao_Paulo")
+    @Scheduled(cron = "0 */1 * * * *", zone = "America/Sao_Paulo")
     public void startTraining() throws Exception {
         System.out.println("INICIANDO PROCEDIMENTO DE TREINO");
         KafkaTemplate<String, ConselorsDTO> kafkaTemplate = beanFactory.getBean(KafkaTemplate.class);
@@ -65,7 +65,7 @@ public class JobScheduler {
         Instances evaluationInstances = leadAndFilter(false, "5output1k.csv", oneR_Detector2);
         Instances testInstances = leadAndFilter(false, "6output1k.csv", oneR_Detector2);
 
-        detector = new Detector(kafkaAdviceProducer, kafkaFeedbackProducer, 2, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS);
+        detector = new Detector(kafkaAdviceProducer, kafkaFeedbackProducer, "2", trainInstances, evaluationInstances, testInstances, NORMAL_CLASS);
 
         // Instancia a quantidade  clusters
         detector.createClusters(5, 2);
@@ -118,15 +118,14 @@ public class JobScheduler {
                             + "/" + D2.getCountTestInstances() + ")");
                     /* Atualiza Totais*/
                 }
-
             }
-
         }
+
         System.out.println("FIM for");
         System.out.println("------------------------------------------------------------------------");
         System.out.println("  --  Test Summary: [Solucionados "+ D2.getGoodAdvices()+"/"+ D2.getConflitos() + " conflitos de " + (D2.getVP() + D2.getVN() + D2.getFP() + D2.getFN()) + " classificações.] \n "
-                + "VP	VN	FP	FN	F1Score \n"
-                + D2.getVP() + ";" + D2.getVN() + ";" + D2.getFP() + ";" + D2.getFN() + ";" + String.valueOf(D2.getDetectionF1Score()).replace(".", ","));
+            + "VP	VN	FP	FN	F1Score \n"
+            + D2.getVP() + ";" + D2.getVN() + ";" + D2.getFP() + ";" + D2.getFN() + ";" + String.valueOf(D2.getDetectionF1Score()).replace(".", ","));
         System.out.println("------------------------------------------------------------------------");
 
         System.out.println("FIM treino");
@@ -134,6 +133,7 @@ public class JobScheduler {
     }
 
     public void processNewSample(ConselorsDTO conselorsDTO) throws Exception {
+        System.out.println("\t**** INICIANDO PROCESSAMENTO DA NOVA AMOSTRA");
         if (detector == null) {
             throw new IllegalStateException("Detector is not initialized.");
         }
@@ -152,11 +152,12 @@ public class JobScheduler {
         trainInstances.add(newInstance);
 
         // Reavalia e treina novamente
+        System.out.println("\t*** REAVALIANDO E TREINANDO NOVAMENTE");
         trainEvaluateAndTest(detector, false, false, true, true, new int[]{4, 48, 8, 12, 33, 40, 79});
 
         // Classifica a nova instância
         double classValue = detector.classifyInstance(newInstance);
-        System.out.println("Class Value: " + classValue);
+        System.out.println("NOVO CLASS VALUE OBTIDO: " + classValue);
     }
 
     public Instances leadAndFilter(boolean printSelection, String file, int[] featureSelection) throws Exception {

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package br.com.ids.domain;
 
 import br.com.ids.dto.ConselorsDTO;
@@ -24,8 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- *
- * @author silvio
+ * @author vinicius
  */
 public class Detector {
 
@@ -33,7 +27,7 @@ public class Detector {
     private final KafkaAdviceProducer kafkaAdviceProducer;
     private final KafkaFeedbackProducer kafkaFeedbackProducer;
 
-    int detectorID; // id de cada conselheiro
+    String detectorID; // id de cada conselheiro
 
     SimpleKMeans kmeans;
 
@@ -56,7 +50,7 @@ public class Detector {
     ClassifierService classifierService;
 
     @Autowired
-    public Detector(KafkaAdviceProducer kafkaAdviceProducer, KafkaFeedbackProducer kafkaFeedbackProducer, int detectorID, Instances trainInstances, Instances evaluationInstances, Instances testInstances, String normalClass) {
+    public Detector(KafkaAdviceProducer kafkaAdviceProducer, KafkaFeedbackProducer kafkaFeedbackProducer, String detectorID, Instances trainInstances, Instances evaluationInstances, Instances testInstances, String normalClass) {
         this.detectorID = detectorID;
         this.trainInstances = trainInstances;
         this.evaluationInstances = evaluationInstances;
@@ -214,10 +208,8 @@ public class Detector {
                             }
                         }
                     }
-
                 }
             }
-
         }
 
         System.out.println(
@@ -463,7 +455,6 @@ public class Detector {
                     );
                 }
             }
-
         }
     }
 
@@ -484,9 +475,7 @@ public class Detector {
                             + (c.getVP() + c.getVN() + c.getFP() + c.getFN())
                             + "/" + getCountTestInstances() + ")");
                 }
-
             }
-
         }
 
         System.out.println("------------------------------------------------------------------------");

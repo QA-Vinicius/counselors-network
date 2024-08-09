@@ -13,7 +13,7 @@ import lombok.Setter;
 public class ConselorsDTO {
 
     @JsonProperty("id_conselheiro")
-    private int id_conselheiro;
+    private String id_conselheiro;
 
     @JsonProperty("flag")
     private String flag;

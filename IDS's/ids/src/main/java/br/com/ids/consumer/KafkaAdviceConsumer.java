@@ -25,14 +25,17 @@ public class KafkaAdviceConsumer {
     public void consumer(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
         logg.info("Received Message " + record.value());
         final var time = System.currentTimeMillis();
-        if(record.value().getId_conselheiro() != 1){
+        if(!record.value().getId_conselheiro().equals("1")){
                 try{
-                    System.out.println("CHEGUEI = " + record.value());
+                    System.out.println("\n\tMENSAGEM DO CONSELHEIRO --> " + record.value().getId_conselheiro() + " RECEBIDA COM SUCESSO == " + record.value() + "\n");
                     adviceService.generatesAdvice(record.value());
                 }catch(Exception ex){
                     throw ex;
                 }
+        } else {
+            System.out.println("Ignored Message from counselor: " + record.value().getId_conselheiro());
         }
+
         System.out.println("CHEGUEI = " + Arrays.toString(record.value().getSample()));
     }
 }

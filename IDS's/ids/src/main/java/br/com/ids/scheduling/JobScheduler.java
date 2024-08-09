@@ -7,6 +7,7 @@ import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.enuns.AdviceEnum;
 import br.com.ids.producer.KafkaAdviceProducer;
 import br.com.ids.service.DetectorClusterService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 
 import java.io.BufferedReader;
@@ -37,7 +40,14 @@ public class JobScheduler {
     @Autowired
     private BeanFactory beanFactory;
 
-    @Scheduled(cron = "0 */2 * * * *", zone = "America/Sao_Paulo")
+    private Detector detector;
+
+    @PostConstruct
+    public void initialize() throws Exception {
+        startTraining();
+    }
+
+    @Scheduled(cron = "0 */1 * * * *", zone = "America/Sao_Paulo")
     public void startTraining() throws Exception {
         System.out.println("INICIANDO PROCEDIMENTO DE TREINO");
         KafkaTemplate<String, ConselorsDTO> kafkaTemplate = beanFactory.getBean(KafkaTemplate.class);
@@ -52,21 +62,22 @@ public class JobScheduler {
         Instances evaluationInstances = leadAndFilter(false, "2output1k.csv", oneR_Detector1);
         Instances testInstances = leadAndFilter(false, "3output1k.csv", oneR_Detector1);
 
-        Detector D1 = new Detector(kafkaAdviceProducer, 1, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS);
+        detector = new Detector(kafkaAdviceProducer, "1", trainInstances, evaluationInstances, testInstances, NORMAL_CLASS);
 
         // Instancia a quantidade  clusters
-        D1.createClusters(5, 2);
+        detector.createClusters(5, 2);
 
         System.out.println("\n######## Detector 1");
 
         // Zera todas as variaveis para avaliação
-        D1.resetConters();
+        detector.resetConters();
         System.out.println("FIM1");
 
         //Treina seus classificadores com o dataset de treino
-        D1 = trainEvaluateAndTest(D1, false, false, true, true, oneR_Detector1);
+        detector = trainEvaluateAndTest(detector, false, false, true, true, oneR_Detector1);
         System.out.println("FIM2");
     }
+
     private static Detector trainEvaluateAndTest(Detector D1, boolean printEvaluation, boolean printTrain, boolean advices, boolean showProgress, int[] features) throws Exception {
         /* Train Phase*/
         System.out.println("------------------------------------------------------------------------");
@@ -117,6 +128,36 @@ public class JobScheduler {
 
         System.out.println("FIM treino");
         return D1;
+    }
+
+    // Executado ao receber o conselho, e não a solicitação dele
+    public void processNewSample(ConselorsDTO conselorsDTO) throws Exception {
+        System.out.println("\t**** INICIANDO PROCESSAMENTO DA NOVA AMOSTRA");
+        if (detector == null) {
+            throw new IllegalStateException("Detector is not initialized.");
+        }
+
+        Instances trainInstances = detector.getTrainInstances();
+        if (trainInstances.classIndex() == -1) {
+            trainInstances.setClassIndex(trainInstances.numAttributes() - 1);
+        }
+
+        double[] sample = conselorsDTO.getSample();
+        double[] values = Arrays.copyOf(sample, sample.length + 1); // Adiciona espaço para o atributo de classe
+        values[values.length - 1] = Double.NaN; // Valor inicial para o atributo de classe
+
+        Instance newInstance = new DenseInstance(1.0, values);
+        newInstance.setDataset(trainInstances);
+        trainInstances.add(newInstance);
+
+        // Reavalia e treina novamente
+        System.out.println("\t*** REAVALIANDO E TREINANDO NOVAMENTE");
+        trainEvaluateAndTest(detector, false, false, true, true, new int[]{4, 48, 8, 12, 33, 40, 79});
+
+
+        // Classifica a nova instância
+//        double classValue = detector.classifyInstance(newInstance);
+//        System.out.println("NOVO CLASS VALUE OBTIDO: " + classValue);
     }
 
     public Instances leadAndFilter(boolean printSelection, String file, int[] featureSelection) throws Exception {

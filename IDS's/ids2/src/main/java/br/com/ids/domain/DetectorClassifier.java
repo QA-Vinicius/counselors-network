@@ -14,8 +14,7 @@ import weka.core.Instances;
 import java.util.ArrayList;
 
 /**
- *
- * @author silvio
+ * @author vinicius
  */
 @Getter
 @Setter
@@ -80,9 +79,7 @@ public class DetectorClassifier {
         dataTest.setClassIndex(dataTest.numAttributes() - 1);
         for (int index = 0; index < clusteredInstances.size(); index++) {
             Instance instance = dataTest.get(index);
-            System.out.println("\t** DEBUG ERRO ARITMETICA");
-            System.out.println("\t\tInstancia classificador: " + classify(instance));
-            System.out.println("\t\tClassValue instance: " + instance.classValue());
+
             if (classify(instance) == instance.classValue()) {
                 System.out.println("\t\tInstancia: " + instance.stringValue(instance.attribute(instance.classIndex())));
                 if (instance.stringValue(instance.attribute(instance.classIndex())).equals(getNormalClass())) {
