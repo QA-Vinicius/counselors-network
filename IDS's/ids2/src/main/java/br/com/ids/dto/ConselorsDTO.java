@@ -27,8 +27,11 @@ public class ConselorsDTO {
     @JsonProperty("f1score")
     private double f1score;
 
-    @JsonProperty("attack") // adaptacao para multiclass
-    private boolean attack;
+//    @JsonProperty("attack") // adaptacao para multiclass
+//    private boolean attack;
+
+    @JsonProperty("result") // adaptacao para multiclass
+    private double result;
 
     @JsonProperty("timestamp")
     private long timestamp;

@@ -503,4 +503,35 @@ public class Detector {
         }
         throw new Exception("No classifier found to classify the instance.");
     }
+
+    public void onAdviceRequest(ConselorsDTO request) throws Exception {
+        double[] sample = request.getSample();
+        // Identificar o cluster correspondente para esta amostra
+        int clusterNum = kmeans.clusterInstance(new DenseInstance(1.0, sample));
+        DetectorClusterService cluster = clusters[clusterNum];
+        ArrayList<DetectorClassifier> selectedClassifiers = cluster.getSelectedClassifiers();
+
+        double bestResult = Double.NaN;
+        double bestF1Score = -1;
+
+        for (DetectorClassifier classifier : selectedClassifiers) {
+            double result = classifier.classifyInstance(new DenseInstance(1.0, sample));
+            if (classifier.getEvaluationF1Score() > bestF1Score) {
+                bestF1Score = classifier.getEvaluationF1Score();
+                bestResult = result;
+            }
+        }
+
+        ConselorsDTO conselorsDTO = ConselorsDTO.builder()
+            .id_conselheiro(detectorID)
+            .flag(String.valueOf(AdviceEnum.RESPONSE_ADVICE))
+            .features(request.getFeatures())
+            .sample(sample)
+            .f1score(bestF1Score)
+            .result(bestResult)
+            .timestamp(System.currentTimeMillis())
+            .build();
+
+        kafkaAdviceProducer.send(conselorsDTO);
+    }
 }

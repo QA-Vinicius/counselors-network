@@ -1,5 +1,6 @@
 package br.com.ids.service;
 
+import br.com.ids.domain.Detector;
 import br.com.ids.domain.DetectorClassifier;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.scheduling.JobScheduler;
@@ -20,14 +21,15 @@ public class GenerateAdviceService {
     @Autowired
     private JobScheduler jobScheduler;
 
-    //Metodo sera adaptado para o ids ao receber o conselho
-    public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception {
-        jobScheduler.processNewSample(conselorsDTO);
-    }
+    @Autowired
+    private Detector detector;
 
-    //Metodo sera adaptado para o ids ao receber o conselho
-    public void processAdvice(ConselorsDTO conselorsDTO) throws Exception {
-        jobScheduler.processNewSample(conselorsDTO);
+//    public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception {
+//        jobScheduler.processNewSample(conselorsDTO); // sera usado para processamento do conselho quando o solicitante receber
+//    }
+
+    public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception {
+        detector.onAdviceRequest(conselorsDTO);
     }
 
 //    public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception {
