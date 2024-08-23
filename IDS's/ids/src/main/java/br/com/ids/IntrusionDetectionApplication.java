@@ -6,8 +6,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-public class IntusionDetectionApplication {
+public class IntrusionDetectionApplication {
 	public static void main(String[] args) {
-		SpringApplication.run(IntusionDetectionApplication.class, args);
+		SpringApplication.run(IntrusionDetectionApplication.class, args);
 	}
 }

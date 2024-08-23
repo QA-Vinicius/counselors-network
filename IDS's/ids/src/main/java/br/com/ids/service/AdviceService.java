@@ -1,7 +1,5 @@
 package br.com.ids.service;
 
-import br.com.ids.domain.Detector;
-import br.com.ids.domain.DetectorClassifier;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.scheduling.JobScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,20 +11,17 @@ import weka.core.Instances;
 import static org.apache.kafka.common.requests.DeleteAclsResponse.log;
 
 @Service
-public class GenerateAdviceService {
+public class AdviceService {
 
     @Autowired
     private JobScheduler jobScheduler;
 
-    @Autowired
-    private Detector detector;
-
-//    public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception {
-//        jobScheduler.processNewSample(conselorsDTO); // sera usado para processamento do conselho quando o solicitante receber
-//    }
-
     public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception {
-        detector.onAdviceRequest(conselorsDTO);
+        jobScheduler.processSample(conselorsDTO);
+    }
+
+    public void learnWithAdvice(ConselorsDTO conselorsDTO) throws Exception {
+        jobScheduler.learnWithAdvice(conselorsDTO); // sera usado para processamento do conselho quando o solicitante receber
     }
 
 //    public void generatesAdvice(ConselorsDTO conselorsDTO) throws Exception {
@@ -57,30 +52,28 @@ public class GenerateAdviceService {
 //        // Envie a resposta de volta via Kafka ou faça outra ação necessária
 //        // Exemplo: Enviar a resposta para outro tópico ou armazenar a resposta
 //    }
-
-
-
-    private Instance createInstanceFromSample(double[] sample, Instances dataset) {
-        // Verifique se o dataset não é nulo
-        if (dataset == null) {
-            log.error("Dataset is null. Cannot create instance from sample.");
-            throw new NullPointerException("Dataset is null.");
-        }
-
-        // Cria uma nova instância com o número de atributos do dataset
-        Instance instance = new DenseInstance(dataset.numAttributes());
-
-        // Define os valores dos atributos da nova instância com base no sample
-        for (int i = 0; i < sample.length; i++) {
-            instance.setValue(dataset.attribute(i), sample[i]);
-        }
-
-        // Define o dataset da nova instância
-        instance.setDataset(dataset);
-
-        return instance;
-    }
-
+//
+//    private Instance createInstanceFromSample(double[] sample, Instances dataset) {
+//        // Verifique se o dataset não é nulo
+//        if (dataset == null) {
+//            log.error("Dataset is null. Cannot create instance from sample.");
+//            throw new NullPointerException("Dataset is null.");
+//        }
+//
+//        // Cria uma nova instância com o número de atributos do dataset
+//        Instance instance = new DenseInstance(dataset.numAttributes());
+//
+//        // Define os valores dos atributos da nova instância com base no sample
+//        for (int i = 0; i < sample.length; i++) {
+//            instance.setValue(dataset.attribute(i), sample[i]);
+//        }
+//
+//        // Define o dataset da nova instância
+//        instance.setDataset(dataset);
+//
+//        return instance;
+//    }
+//
 //    private double classifyInstance(Instance instance) throws Exception {
 //        // Utilize o classificador que melhor se adequar ao seu sistema
 //        // Por exemplo, o primeiro classificador da lista de selecionados

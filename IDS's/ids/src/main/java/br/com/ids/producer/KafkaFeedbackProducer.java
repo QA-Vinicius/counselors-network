@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 public class KafkaFeedbackProducer {
 
     private final String topic;
-    private final Logger logg = LoggerFactory.getLogger(KafkaFeedbackProducer.class);
+
     @Autowired
     private final KafkaTemplate<String, ConselorsDTO> kafkaTemplate;
 

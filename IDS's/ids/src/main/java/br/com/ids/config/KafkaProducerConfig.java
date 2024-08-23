@@ -1,6 +1,7 @@
 package br.com.ids.config;
 
 import br.com.ids.dto.ConselorsDTO;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,4 +35,8 @@ public class KafkaProducerConfig {
         return new KafkaTemplate<>(kafkaProducerConfigFactory());
     }
 
+    @Bean
+    public NewTopic adviceTopic() {
+        return new NewTopic("ADVICE_TOPIC", 3, (short) 1); // 3 partições, 1 réplica
+    }
 }

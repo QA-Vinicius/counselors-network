@@ -81,7 +81,6 @@ public class DetectorClassifier {
             Instance instance = dataTest.get(index);
 
             if (classify(instance) == instance.classValue()) {
-                System.out.println("\t\tInstancia: " + instance.stringValue(instance.attribute(instance.classIndex())));
                 if (instance.stringValue(instance.attribute(instance.classIndex())).equals(getNormalClass())) {
                     VN = VN + 1;
                 } else {
@@ -89,8 +88,6 @@ public class DetectorClassifier {
                 }
             } else {
                 if (instance.stringValue(instance.attribute(instance.classIndex())).equals(getNormalClass())) {
-                    System.out.println();
-                    System.out.println("\t\tInstancia: " + instance.stringValue(instance.attribute(instance.classIndex())));
                     FP = FP + 1;
                 } else {
                     FN = FN + 1;

@@ -2,7 +2,6 @@ package br.com.ids.consumer;
 
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.service.FeedbackService;
-import br.com.ids.service.GenerateAdviceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;

@@ -26,6 +26,15 @@ import java.util.ArrayList;
 @Setter
 public class DetectorClusterService {
 
+    ArrayList<Integer> clusteredInstancesIndex; //[cluster][index]
+    ArrayList<DetectorClassifier> selectedClassifiers;
+    private ClassifierService classifierService;
+
+    int clusterNum;
+    double threshold = 3.0; // 2% do best
+    double minAccAcceptable = 80.0;
+    String strAcc = "";
+
     DetectorClassifier[] classifiers = {
         new DetectorClassifier(new RandomTree(), "Random Tree", "BENIGN"),
         new DetectorClassifier(new RandomForest(), "Random Forest", "BENIGN"),
@@ -33,38 +42,27 @@ public class DetectorClusterService {
         new DetectorClassifier(new J48(), "J48", "BENIGN"),
         new DetectorClassifier(new REPTree(), "REP Tree", "BENIGN")
     };
-    ArrayList<Integer> clusteredInstancesIndex; //[cluster][index]
-    int clusterNum;
 
-    double threshold = 3.0; // 2% do best
-    double minAccAcceptable = 80.0;
-    String strAcc = "";
-
-    ArrayList<DetectorClassifier> selectedClassifiers;
-
-    private ClassifierService classifierService;
-    private Instances trainInstances;
+    public DetectorClusterService() {}
 
     public DetectorClusterService(int clusterNum) {
         this.clusteredInstancesIndex = new ArrayList<Integer>();
         this.clusterNum = clusterNum;
     }
 
-    public DetectorClusterService() {
-    }
     public void addInstanceIndex(int index) {
         this.clusteredInstancesIndex.add(index);
     }
 
     public void evaluateClassifiers(Instances dataEvaluation) throws Exception {
         for (DetectorClassifier c : classifiers) {
-            System.out.println("\nAvaliaçao do Classificador: " + c.getName());
+            //System.out.println("\nAvaliaçao do Classificador: " + c.getName());
             c.resetAndEvaluate(dataEvaluation, clusteredInstancesIndex);
         }
     }
 
     public void printStrEvaluation() {
-        System.out.println("Cluster " + clusterNum + ";" + strAcc);
+        System.out.println("\t\tCluster " + clusterNum + ";" + strAcc);
     }
 
     public void classifierSelection(boolean showProgressSelection) throws Exception {
@@ -80,10 +78,10 @@ public class DetectorClusterService {
             if ((c.getEvaluationAccuracy() + threshold >= best.getEvaluationAccuracy()) && (c.getEvaluationAccuracy() >= getMinAccAcceptable())) {
                 selectedClassifiers.add(c);
                 c.setSelected(true);
-//                System.out.println("Classificador: "+c.getName()+" selecionado."+c.evaluationAccuracy+" >= "+getMinAccAcceptable());
+                //System.out.println("Classificador: "+c.getName()+" selecionado."+c.evaluationAccuracy+" >= "+getMinAccAcceptable());
             } else {
                 c.setSelected(false);
-//                System.out.println("Classificador: "+c.getName()+" excluido."); 
+                //System.out.println("Classificador: "+c.getName()+" excluido.");
             }
         }
         if (showProgressSelection) {
@@ -96,13 +94,5 @@ public class DetectorClusterService {
             dataTrain.setClassIndex(dataTrain.numAttributes() - 1);
             c.train(dataTrain, showTrainingTime);
         }
-    }
-
-    public Instances getTrainInstances() {
-        return this.trainInstances;
-    }
-
-    public void setTrainInstances(Instances trainInstances) {
-        this.trainInstances = trainInstances;
     }
 }
