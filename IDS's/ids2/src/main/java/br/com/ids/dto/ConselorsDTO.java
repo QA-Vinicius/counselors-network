@@ -15,6 +15,9 @@ public class ConselorsDTO {
     @JsonProperty("id_conselheiro")
     private String id_conselheiro;
 
+    @JsonProperty("id_sample")
+    private int id_sample;
+
     @JsonProperty("flag")
     private String flag;
 

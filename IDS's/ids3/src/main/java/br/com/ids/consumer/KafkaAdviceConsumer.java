@@ -19,7 +19,7 @@ public class KafkaAdviceConsumer {
 
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
-    @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup", containerFactory = "jsonKafkaListenerContainer")
+    @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup3", containerFactory = "jsonKafkaListenerContainer")
     public void consumer(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
         logg.info("Received Message from Partition: " + record.partition() + ", Offset: " + record.offset());
         final var time = System.currentTimeMillis();
@@ -28,7 +28,7 @@ public class KafkaAdviceConsumer {
         System.out.println("\tBy: Counselor " + record.value().getId_conselheiro());
         System.out.println("\tMessage Type: " + record.value().getFlag());
 
-        if(!record.value().getId_conselheiro().equals("1")){
+        if(!record.value().getId_conselheiro().equals("3")){
             if (record.value().getFlag().equals("REQUEST_ADVICE")) {
                 try{
                     System.out.println("\tID Sample: " + record.value().getId_sample());

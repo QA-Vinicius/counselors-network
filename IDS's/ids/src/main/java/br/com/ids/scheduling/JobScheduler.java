@@ -76,7 +76,7 @@ public class JobScheduler {
         //Treina seus classificadores com o dataset de treino
         detector = trainingStage(detector, false);
         detector = evaluationStage(detector, false, true);
-        detector = testStage(detector, true, false, true, oneR_Detector1);
+//        detector = testStage(detector, true, false, true, oneR_Detector1);
 //        System.out.println("FIM TREINO AVALIAÇÃO E TESTE");
     }
 

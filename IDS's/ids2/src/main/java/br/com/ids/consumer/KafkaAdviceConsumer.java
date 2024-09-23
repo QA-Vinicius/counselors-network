@@ -21,7 +21,7 @@ public class KafkaAdviceConsumer {
 
     @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup2", containerFactory = "jsonKafkaListenerContainer")
     public void consumer(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
-        logg.info("Received Message " + record.value());
+        logg.info("Received Message from Partition: " + record.partition() + ", Offset: " + record.offset());
         final var time = System.currentTimeMillis();
 
         System.out.println("\n\t---------------------- NEW MESSAGE ----------------------");
@@ -31,6 +31,7 @@ public class KafkaAdviceConsumer {
         if(!record.value().getId_conselheiro().equals("2")){
             if (record.value().getFlag().equals("REQUEST_ADVICE")) {
                 try{
+                    System.out.println("\tID Sample: " + record.value().getId_sample());
                     adviceService.generatesAdvice(record.value());
                 }catch(Exception ex){
                     throw ex;

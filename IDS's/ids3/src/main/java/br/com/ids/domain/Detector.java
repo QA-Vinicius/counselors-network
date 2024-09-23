@@ -6,6 +6,7 @@ import br.com.ids.producer.KafkaAdviceProducer;
 import br.com.ids.producer.KafkaFeedbackProducer;
 import br.com.ids.service.ClassifierService;
 import br.com.ids.service.DetectorClusterService;
+import br.com.ids.util.DataLoader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import weka.clusterers.SimpleKMeans;
@@ -17,8 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static br.com.ids.scheduling.JobScheduler.leadAndFilter;
-
 /**
  * @author vinicius
  */
@@ -27,7 +26,9 @@ public class Detector {
     // Variaveis para construcao do JSON a ser publicado
     private final KafkaAdviceProducer kafkaAdviceProducer;
     private final KafkaFeedbackProducer kafkaFeedbackProducer;
-    private final String detectorID = "1"; // id de cada conselheiro
+    private final String detectorID = "3"; // id de cada conselheiro
+
+    DataLoader dataLoader = new DataLoader();
 
     SimpleKMeans kmeans;
 
@@ -72,6 +73,7 @@ public class Detector {
         kmeans.setSeed(seed);
         kmeans.setPreserveInstancesOrder(true);
         kmeans.setNumClusters(k);
+        System.out.println("DEBUG EVALUATION NO LABEL: " + evaluationInstancesNoLabel.lastInstance().numAttributes());
         kmeans.buildClusterer(evaluationInstancesNoLabel);
 
         for (int ki = 0; ki < k; ki++) {
@@ -87,7 +89,7 @@ public class Detector {
     //Metodo para abstrair do CSV as classes e mapear seus nomes para comparar com o double
     //Ex: 0.0 = Normal, 1.0 = random_replay ...
     public void loadClassValues(String fileName) throws Exception {
-        Instances instances = leadAndFilter(false, fileName, new int[]{}); // Carregue as instâncias
+        Instances instances = dataLoader.leadAndFilter(false, fileName, new int[]{}); // Carregue as instâncias
         int classIndex = instances.classIndex();
 
         if (classIndex == -1) {
@@ -227,14 +229,14 @@ public class Detector {
                             }
                         }
                     }
-
                 }
             }
-
         }
 
-//        System.out.println("Good Advices: " + getGoodAdvices() + "/" + conflitos);
-//        System.out.println("Os ataques começaram na amostra " + fimTrafegoNormal + "(" + (fimTrafegoNormal / testInstances.numAttributes()) + "%)");
+        System.out.println(
+                "Good Advices: " + getGoodAdvices() + "/" + conflitos);
+        System.out.println(
+                "Os ataques começaram na amostra " + fimTrafegoNormal + "(" + (fimTrafegoNormal / testInstances.numAttributes()) + "%)");
     }
 
     public Advice getAdvice(int timestamp) {
@@ -392,7 +394,7 @@ public class Detector {
                 // Converta o objeto ConselorsDTO para JSON
                 ObjectMapper mapper = new ObjectMapper();
 
-                kafkaAdviceProducer.send(conselorsDTO);
+                kafkaFeedbackProducer.sendFeedback(conselorsDTO);
 
                 System.out.println("FEEDBACK POSITIVO\n");
 //                                        System.out.println("Class: " + advice.getClassNormal());
@@ -474,7 +476,6 @@ public class Detector {
                     );
                 }
             }
-
         }
     }
 
@@ -495,9 +496,7 @@ public class Detector {
                             + (c.getVP() + c.getVN() + c.getFP() + c.getFN())
                             + "/" + getCountTestInstances() + ")");
                 }
-
             }
-
         }
 
         System.out.println("------------------------------------------------------------------------");

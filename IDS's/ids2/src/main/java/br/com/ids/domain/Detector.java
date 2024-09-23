@@ -192,6 +192,7 @@ public class Detector {
                         if (classifiersOutput[classifIndex][instIndex] != classifiersOutput[classifIndex - 1][instIndex]) {
                             ConselorsDTO conselorsDTO = ConselorsDTO.builder()
                                 .id_conselheiro(detectorID)
+                                .id_sample(instIndex)
                                 .flag(adviceEnum.toString()) //identifica a msg como conselho ou pedido
                                 .features(features)
                                 .sample(sample)//(Arrays.stream(evaluatingPeer.toDoubleArray()).toArray())

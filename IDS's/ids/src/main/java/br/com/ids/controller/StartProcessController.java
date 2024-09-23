@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/cnw")
-public class StratProcessController {
+public class StartProcessController {
 
     @Autowired
     private JobScheduler jobScheduler;
