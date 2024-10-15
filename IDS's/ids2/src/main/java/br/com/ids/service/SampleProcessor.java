@@ -36,9 +36,13 @@ public class SampleProcessor {
             trainInstances.setClassIndex(trainInstances.numAttributes() - 1);
         }
 
+        System.out.println("\tSended by: " + conselorsDTO.getId_conselheiro());
+
         System.out.println("\t1- Extracting the received sample and label");
         double[] sample = conselorsDTO.getSample();
         double sampleLabel = conselorsDTO.getResult();
+        System.out.println("\t\t- Label: " + sampleLabel);
+
         double[] values = Arrays.copyOf(sample, sample.length + 1); // Adiciona espaço para o atributo de classe
         values[values.length - 1] = sampleLabel; // Valor inicial para o atributo de classe
 

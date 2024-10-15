@@ -561,6 +561,7 @@ public class Detector {
         System.out.println("\t6- Sending Advice");
         ConselorsDTO conselorsDTO = ConselorsDTO.builder()
                 .id_conselheiro(detectorID)
+                .id_sample(request.getId_sample())
                 .flag(String.valueOf(AdviceEnum.RESPONSE_ADVICE))
                 .features(request.getFeatures())
                 .sample(sample)

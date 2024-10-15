@@ -27,11 +27,12 @@ public class KafkaAdviceConsumer {
         System.out.println("\n\t---------------------- NEW MESSAGE ----------------------");
         System.out.println("\tBy: Counselor " + record.value().getId_conselheiro());
         System.out.println("\tMessage Type: " + record.value().getFlag());
+        System.out.println("\tID Sample: " + record.value().getId_sample());
 
         if(!record.value().getId_conselheiro().equals("3")){
             if (record.value().getFlag().equals("REQUEST_ADVICE")) {
                 try{
-                    System.out.println("\tID Sample: " + record.value().getId_sample());
+                    Thread.sleep(15000);
                     adviceService.generatesAdvice(record.value());
                 }catch(Exception ex){
                     throw ex;
@@ -39,7 +40,7 @@ public class KafkaAdviceConsumer {
             }
             if (record.value().getFlag().equals("RESPONSE_ADVICE")) {
                 try{
-                    adviceService.learnWithAdvice(record.value());
+//                    adviceService.learnWithAdvice(record.value());
                 }catch(Exception ex){
                     throw ex;
                 }

@@ -1,6 +1,7 @@
 package br.com.ids.consumer;
 
 import br.com.ids.dto.ConselorsDTO;
+import br.com.ids.service.AdviceResponseCache;
 import br.com.ids.service.AdviceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -17,6 +18,9 @@ public class KafkaAdviceConsumer {
     @Autowired
     private AdviceService adviceService;
 
+    @Autowired
+    private AdviceResponseCache responseCache;
+
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
     @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup2", containerFactory = "jsonKafkaListenerContainer")
@@ -27,11 +31,11 @@ public class KafkaAdviceConsumer {
         System.out.println("\n\t---------------------- NEW MESSAGE ----------------------");
         System.out.println("\tBy: Counselor " + record.value().getId_conselheiro());
         System.out.println("\tMessage Type: " + record.value().getFlag());
+        System.out.println("\tID Sample: " + record.value().getId_sample());
 
         if(!record.value().getId_conselheiro().equals("2")){
             if (record.value().getFlag().equals("REQUEST_ADVICE")) {
                 try{
-                    System.out.println("\tID Sample: " + record.value().getId_sample());
                     adviceService.generatesAdvice(record.value());
                 }catch(Exception ex){
                     throw ex;
@@ -39,7 +43,12 @@ public class KafkaAdviceConsumer {
             }
             if (record.value().getFlag().equals("RESPONSE_ADVICE")) {
                 try{
-                    adviceService.learnWithAdvice(record.value());
+                    responseCache.storeAdvice(record.value());
+
+                    if(responseCache.isReadyToLearn(record.value().getId_sample())) {
+                        ConselorsDTO bestAdvice = responseCache.getBestAdvice(record.value().getId_sample());
+                        adviceService.learnWithAdvice(bestAdvice);
+                    }
                 }catch(Exception ex){
                     throw ex;
                 }
