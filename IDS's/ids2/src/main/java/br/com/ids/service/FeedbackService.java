@@ -15,7 +15,7 @@ public class FeedbackService {
 //        detector.trainInstances.add(GenerateAdviceService.generateInstance(value));
         /* Treina Todos Classificadores Novamente */
         detector.trainClassifiers(false);
-        detector.evaluateClassifiersPerCluster(true, false);
+        detector.evaluateClassifiersPerCluster("beforeAdvice", true, false);
         detector.selectClassifierPerCluster(false);
     }
 }

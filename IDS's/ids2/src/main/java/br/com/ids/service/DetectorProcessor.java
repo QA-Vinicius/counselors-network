@@ -13,27 +13,27 @@ public class DetectorProcessor {
         System.out.println("\t\tTraining with " + detec.trainInstances.numInstances() + " instances.");
         detec.trainClassifiers(printTrain);
 
-        System.out.println("\n\tEnd of training stage");
-        System.out.println("------------------------------------------------------------------------");
+        System.out.println("\n\tEnd of training stage\n\n");
+//        System.out.println("------------------------------------------------------------------------");
 
         return detec;
     }
 
-    public Detector evaluationStage(Detector detec, boolean printEvaluation, boolean showProgress) throws Exception {
+    public Detector evaluationStage(String stage, Detector detec, boolean printEvaluation, boolean showProgress) throws Exception {
         /* Evaluation Phase */
         System.out.println("\t2- Evaluation Stage");
-        detec.evaluateClassifiersPerCluster(printEvaluation, showProgress);
+        detec.evaluateClassifiersPerCluster(stage, printEvaluation, showProgress);
 
-        System.out.println("\n\tEnd of evaluation stage");
-        System.out.println("------------------------------------------------------------------------");
+        System.out.println("\n\tEnd of evaluation stage\n\n");
+//        System.out.println("------------------------------------------------------------------------");
 
         return detec;
     }
 
-    public Detector testStage(Detector detec, boolean advices, boolean printEvaluation, boolean showProgress, int[] features) throws Exception {
+    public Detector testStage(String stage, Detector detec, boolean advices, boolean printEvaluation, boolean showProgress, int[] features) throws Exception {
         /* Evaluation Phase */
         System.out.println("\t3- Testing Stage");
-        detec.clusterAndTestSample(advices, true, true, printEvaluation, showProgress, features, AdviceEnum.REQUEST_ADVICE);
+        detec.clusterAndTestSample(stage, advices, true, true, printEvaluation, showProgress, features, AdviceEnum.REQUEST_ADVICE);
 
         System.out.println("\n\tEnd of testing stage");
         System.out.println("------------------------------------------------------------------------");
@@ -41,7 +41,7 @@ public class DetectorProcessor {
         return detec;
     }
 
-    public Detector trainEvaluateAndTest(Detector D2, boolean printEvaluation, boolean printTrain, boolean advices, boolean showProgress, int[] features) throws Exception {
+    public Detector trainEvaluateAndTest(String stage, Detector D2, boolean printEvaluation, boolean printTrain, boolean advices, boolean showProgress, int[] features) throws Exception {
         /* Train Phase*/
         System.out.println("------------------------------------------------------------------------");
         System.out.println("  --  Train");
@@ -51,11 +51,11 @@ public class DetectorProcessor {
         System.out.println("FIM TrainClassifiers");
 
         /* Evaluation Phase */
-        D2.evaluateClassifiersPerCluster(printEvaluation, showProgress);
+        D2.evaluateClassifiersPerCluster("beforeAdvice", printEvaluation, showProgress);
         System.out.println("FIM EvaluateClassifiersPerCluster");
 
         /* Test Phase */
-        D2.clusterAndTestSample(advices, true, true, printEvaluation, showProgress, features, AdviceEnum.REQUEST_ADVICE);
+        D2.clusterAndTestSample(stage, advices, true, true, printEvaluation, showProgress, features, AdviceEnum.REQUEST_ADVICE);
         System.out.println("FIM ClusterAndTestSample");
 //        int VP = 0;
 //        int VN = 0;

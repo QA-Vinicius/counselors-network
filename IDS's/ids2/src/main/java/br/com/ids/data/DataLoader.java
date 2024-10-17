@@ -1,4 +1,4 @@
-package br.com.ids.util;
+package br.com.ids.data;
 
 import org.springframework.stereotype.Component;
 import weka.core.Instances;

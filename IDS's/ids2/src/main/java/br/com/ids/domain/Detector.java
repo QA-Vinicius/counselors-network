@@ -6,7 +6,7 @@ import br.com.ids.producer.KafkaAdviceProducer;
 import br.com.ids.producer.KafkaFeedbackProducer;
 import br.com.ids.service.ClassifierService;
 import br.com.ids.service.DetectorClusterService;
-import br.com.ids.util.DataLoader;
+import br.com.ids.data.DataLoader;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import weka.clusterers.SimpleKMeans;
@@ -16,6 +16,7 @@ import weka.core.Instances;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,6 +48,27 @@ public class Detector {
     ArrayList<Advice> historicalData = new ArrayList<>();
     String strTestAcc = "";
 
+    // Variaveis para receber as metricas de avaliacao
+    List<Double> initialEvaluationAccuracies = new ArrayList<>();
+    List<Double> initialEvaluationF1Scores = new ArrayList<>();
+    Double initialEvaluationAverageAccuracy;
+    Double initialEvaluationAverageF1Score;
+
+    List<Double> finalEvaluationAccuracies = new ArrayList<>();
+    List<Double> finalEvaluationF1Scores = new ArrayList<>();
+    Double finalEvaluationAverageAccuracy;
+    Double finalEvaluationAverageF1Score;
+
+    // Variaveis para receber as metricas de teste
+    List<Double> initialTestAccuracies = new ArrayList<>();
+    List<Double> initialTestF1Scores = new ArrayList<>();
+    Double initialTestAverageAccuracy;
+    Double initialTestAverageF1Score;
+
+    // Variavel que ira receber a relacao do f1Score e acuracia antes e depois do conselho, para validar se agregou ou nao
+    Double deltaF1Score;
+    Double deltaAccuracy;
+
     // Variavel que ira receber as classes abstraidas do CSV pelo metodo loadClassValues
     public static Map<Double, String> classValueMap = new HashMap<>();
 
@@ -73,7 +95,7 @@ public class Detector {
         kmeans.setSeed(seed);
         kmeans.setPreserveInstancesOrder(true);
         kmeans.setNumClusters(k);
-        System.out.println("DEBUG EVALUATION NO LABEL: " + evaluationInstancesNoLabel.lastInstance().numAttributes());
+//        System.out.println("DEBUG EVALUATION NO LABEL: " + evaluationInstancesNoLabel.lastInstance().numAttributes());
         kmeans.buildClusterer(evaluationInstancesNoLabel);
 
         for (int ki = 0; ki < k; ki++) {
@@ -118,18 +140,92 @@ public class Detector {
         return trainInstances;
     }
 
-    public void evaluateClassifiersPerCluster(boolean printEvaluation, boolean showProgress) throws Exception {
+    public Instances getEvaluationInstances() {
+        return evaluationInstances;
+    }
+
+//    public void evaluateClassifiersPerCluster(boolean printEvaluation, boolean showProgress) throws Exception {
+//        for (DetectorClusterService cluster : clusters) {
+//            evaluationInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
+//            cluster.evaluateClassifiers(evaluationInstances);
+//        }
+//        selectClassifierPerCluster(showProgress);
+//        if (printEvaluation) {
+//            printEvaluationResults();
+//        }
+//    }
+
+    public void evaluateClassifiersPerCluster(String stage, boolean printEvaluation, boolean showProgress) throws Exception {
+        double totalAccuracy = 0;
+        double totalF1Score = 0;
+        int classifierCount = 0;
+
+        System.out.print("\t--> Stage: " + stage);
         for (DetectorClusterService cluster : clusters) {
             evaluationInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
             cluster.evaluateClassifiers(evaluationInstances);
+
+            System.out.println("\n");
+            // Obter as métricas de cada classificador e acumular
+            for (DetectorClassifier c : cluster.getClassifiers()) {
+                double accuracy = c.getEvaluationAccuracy();
+                double f1Score = c.getEvaluationF1Score();
+
+                totalAccuracy += accuracy;
+                totalF1Score += f1Score;
+                classifierCount++;
+
+                System.out.println("\t\tClassifier " + c.getName() +
+                        ": \t\tAccuracy: " + accuracy +
+                        " | F1-Score: " + f1Score);
+
+                if ("Evaluation Stage - Before Advice".equals(stage)) {
+                    initialEvaluationAccuracies.add(accuracy);
+                    initialEvaluationF1Scores.add(f1Score);
+                }
+                else if ("Evaluation Stage - After Advice".equals(stage)) {
+                    finalEvaluationAccuracies.add(accuracy);
+                    finalEvaluationF1Scores.add(f1Score);
+                }
+                else if ("Testing Stage".equals(stage)) {
+                    initialTestAccuracies.add(accuracy);
+                    initialTestF1Scores.add(f1Score);
+                }
+            }
         }
+
+        if (classifierCount > 0) {
+            double averageAccuracy = totalAccuracy / classifierCount;
+            double averageF1Score = totalF1Score / classifierCount;
+
+            if ("Evaluation Stage - Before Advice".equals(stage)) {
+                initialEvaluationAverageAccuracy = averageAccuracy;
+                initialEvaluationAverageF1Score = averageF1Score;
+                System.out.println("\n\t\t- Average Accuracy (" + stage + "): " + initialEvaluationAverageAccuracy);
+                System.out.println("\t\t- Average F1Score (" + stage + "): " + initialEvaluationAverageF1Score + "\n");
+            }
+            else if ("Evaluation Stage - After Advice".equals(stage)) {
+                finalEvaluationAverageAccuracy = averageAccuracy;
+                finalEvaluationAverageF1Score = averageF1Score;
+                System.out.println("\n\t\t- Average Accuracy (" + stage + "): " + finalEvaluationAverageAccuracy);
+                System.out.println("\t\t- Average F1Score (" + stage + "): " + finalEvaluationAverageF1Score + "\n");
+            }
+            else if ("Testing Stage".equals(stage)) {
+                initialTestAverageAccuracy = averageAccuracy;
+                initialTestAverageF1Score = averageF1Score;
+                System.out.println("\n\t\t- Average Accuracy (" + stage + "): " + initialTestAverageAccuracy);
+                System.out.println("\t\t- Average F1Score (" + stage + "): " + initialTestAverageF1Score + "\n");
+            }
+        }
+
         selectClassifierPerCluster(showProgress);
+
         if (printEvaluation) {
             printEvaluationResults();
         }
     }
 
-    public void clusterAndTestSample(boolean enableAdvice, boolean learnWithAdvice, boolean learnWithoutAdvices, boolean printEvaResults, boolean showProgress, int[] features, AdviceEnum adviceEnum) throws Exception {
+    public void clusterAndTestSample(String stage, boolean enableAdvice, boolean learnWithAdvice, boolean learnWithoutAdvices, boolean printEvaResults, boolean showProgress, int[] features, AdviceEnum adviceEnum) throws Exception {
         // Calculando teste
 //        int maxSizeTrain = 10000;
         boolean csv = true;
@@ -159,7 +255,7 @@ public class Detector {
 //                System.out.println("\n\n\n\nAcc;" + strTestAcc);// + ";" + trainInstances.size() + ";" + evaluationInstances.size());
                 if (learnWithoutAdvices) {
                     trainClassifiers(false);
-                    evaluateClassifiersPerCluster(printEvaResults, showProgress);
+                    evaluateClassifiersPerCluster(stage, printEvaResults, showProgress);
                 }
 
                 //Print to validate the best accuracies obtained from the cluster for each sample in it
@@ -194,7 +290,6 @@ public class Detector {
                                 .id_conselheiro(detectorID)
                                 .id_sample(instIndex)
                                 .flag(adviceEnum.toString()) //identifica a msg como conselho ou pedido
-                                .features(features)
                                 .sample(sample)//(Arrays.stream(evaluatingPeer.toDoubleArray()).toArray())
                                 .f1score(c.getEvaluationF1Score())
                                 .timestamp(System.currentTimeMillis())
@@ -233,10 +328,8 @@ public class Detector {
             }
         }
 
-        System.out.println(
-                "Good Advices: " + getGoodAdvices() + "/" + conflitos);
-        System.out.println(
-                "Os ataques começaram na amostra " + fimTrafegoNormal + "(" + (fimTrafegoNormal / testInstances.numAttributes()) + "%)");
+//        System.out.println("Good Advices: " + getGoodAdvices() + "/" + conflitos);
+//        System.out.println("Os ataques começaram na amostra " + fimTrafegoNormal + "(" + (fimTrafegoNormal / testInstances.numAttributes()) + "%)");
     }
 
     public Advice getAdvice(int timestamp) {
@@ -376,7 +469,7 @@ public class Detector {
                 trainInstances.add(instance); // Realimenta a cada conselho
                 /* Treina Todos Classificadores Novamente */
                 trainClassifiers(false);
-                evaluateClassifiersPerCluster(printEvaResu, showProgress);
+//                evaluateClassifiersPerCluster("beforeAdvice", printEvaResu, showProgress);
                 selectClassifierPerCluster(showProgress);
             }
             if (advice.getAdvisorResult() == correctValue) {
@@ -385,7 +478,6 @@ public class Detector {
                 ConselorsDTO conselorsDTO = ConselorsDTO.builder()
                         .id_conselheiro(detectorID)
                         .flag(String.valueOf(AdviceEnum.FEEDBACK)) //diferencia o feedback de um conselho
-                        .features(features)
                         .sample(teste)//(Arrays.stream(evaluatingPeer.toDoubleArray()).toArray()))
                         .timestamp(System.currentTimeMillis())
                         .feedback("Positive")
@@ -562,7 +654,6 @@ public class Detector {
                 .id_conselheiro(detectorID)
                 .id_sample(request.getId_sample())
                 .flag(String.valueOf(AdviceEnum.RESPONSE_ADVICE))
-                .features(request.getFeatures())
                 .sample(sample)
                 .f1score(bestF1Score)
                 .result(bestResult)
@@ -570,5 +661,38 @@ public class Detector {
                 .build();
 
         kafkaAdviceProducer.send(conselorsDTO);
+    }
+
+    public void sendFeedback(int id_sample, double[] sample, double result) {
+        //Comparar a diferenca de f1Score e acuracia
+        deltaF1Score = finalEvaluationAverageF1Score - initialEvaluationAverageF1Score;
+        deltaAccuracy = finalEvaluationAverageAccuracy - initialTestAverageAccuracy;
+
+        System.out.println("\t\t- Delta F1-Score: " + deltaF1Score);
+        System.out.println("\t\t- Delta Accuracy: " + deltaAccuracy);
+
+        String feedback = "";
+        if(deltaF1Score > 0.0) {
+            System.out.println("\t\t- Feedback positivo!\n");
+            feedback = "Positive";
+        } else {
+            System.out.println("\t\t- Feedback negativo!\n");
+            feedback = "Negative";
+        }
+
+        ConselorsDTO conselorsDTO = ConselorsDTO.builder()
+                .id_conselheiro(detectorID)
+                .id_sample(id_sample)
+                .flag(String.valueOf(AdviceEnum.FEEDBACK))
+                .feedback(feedback)
+                .sample(sample)
+                .result(result)
+                .f1score(finalEvaluationAverageF1Score)
+                .deltaF1Score(deltaF1Score)
+                .timestamp(System.currentTimeMillis())
+                .build();
+
+        ObjectMapper mapper = new ObjectMapper();
+        kafkaFeedbackProducer.sendFeedback(conselorsDTO);
     }
 }

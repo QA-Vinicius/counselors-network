@@ -1,15 +1,12 @@
 package br.com.ids.scheduling;
 
 import br.com.ids.domain.Detector;
-import br.com.ids.domain.DetectorClassifier;
 import br.com.ids.dto.ConselorsDTO;
-import br.com.ids.enuns.AdviceEnum;
 import br.com.ids.producer.KafkaAdviceProducer;
 import br.com.ids.producer.KafkaFeedbackProducer;
-import br.com.ids.service.DetectorClusterService;
 import br.com.ids.service.DetectorProcessor;
 import br.com.ids.service.SampleProcessor;
-import br.com.ids.util.DataLoader;
+import br.com.ids.data.DataLoader;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.BeanFactory;
@@ -18,14 +15,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
-import weka.core.DenseInstance;
-import weka.core.Instance;
 import weka.core.Instances;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.util.Arrays;
 
 @Component
 @EnableScheduling
@@ -82,8 +72,8 @@ public class JobScheduler {
 
         //Treina seus classificadores com o dataset de treino
         detector = detectorProcessor.trainingStage(detector, false);
-        detector = detectorProcessor.evaluationStage(detector, false, true);
-        detector = detectorProcessor.testStage(detector, true, false, true, oneR_Detector2);
+        detector = detectorProcessor.evaluationStage("Evaluation Stage - Before Advice", detector, false, true);
+        detector = detectorProcessor.testStage("Testing Stage", detector, true, false, true, oneR_Detector2);
 //        System.out.println("FIM TREINO AVALIAÇÃO E TESTE");
     }
 

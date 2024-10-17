@@ -45,7 +45,7 @@ public class KafkaAdviceConsumer {
                 try{
                     responseCache.storeAdvice(record.value());
 
-                    if(responseCache.isReadyToLearn(record.value().getId_sample())) {
+                    if(responseCache.stoppingCriterion(record.value().getId_sample())) {
                         ConselorsDTO bestAdvice = responseCache.getBestAdvice(record.value().getId_sample());
                         adviceService.learnWithAdvice(bestAdvice);
                     }

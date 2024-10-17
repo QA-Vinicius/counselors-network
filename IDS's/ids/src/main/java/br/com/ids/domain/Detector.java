@@ -116,6 +116,10 @@ public class Detector {
         return trainInstances;
     }
 
+    public Instances getEvaluationInstances() {
+        return evaluationInstances;
+    }
+
     public void evaluateClassifiersPerCluster(boolean printEvaluation, boolean showProgress) throws Exception {
         for (DetectorClusterService cluster : clusters) {
             evaluationInstances.setClassIndex(evaluationInstances.numAttributes() - 1);

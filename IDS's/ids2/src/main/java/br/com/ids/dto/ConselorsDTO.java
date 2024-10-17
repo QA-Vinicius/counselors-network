@@ -21,9 +21,6 @@ public class ConselorsDTO {
     @JsonProperty("flag")
     private String flag;
 
-    @JsonProperty("features")
-    private int[] features;
-
     @JsonProperty("sample") // amostra/linha onde ocorreu o conflito
     private double[] sample;
 
@@ -44,6 +41,9 @@ public class ConselorsDTO {
 
     @JsonProperty("deltaF1Score")
     private double deltaF1Score;
+
+    @JsonProperty("features")
+    private int[] features;
 
     public ConselorsDTO() {
     }

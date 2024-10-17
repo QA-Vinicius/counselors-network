@@ -54,10 +54,10 @@ public class DetectorClassifier {
     public Classifier train(Instances dataTrain, boolean showTrainingTime) throws Exception {
         long currentTime = System.nanoTime();
         classifier.buildClassifier(dataTrain);
-        long traininigTime = System.nanoTime() - currentTime;
-        setTrainNanotime(traininigTime);
+        long trainingTime = System.nanoTime() - currentTime;
+        setTrainNanotime(trainingTime);
         if (showTrainingTime) {
-            System.out.println("Classificador " + getName() + " treinado em: " + traininigTime / 1000000 + "ms/" + traininigTime + "ns");
+            System.out.println("Classificador " + getName() + " treinado em: " + trainingTime / 1000000 + "ms/" + trainingTime + "ns");
         }
         return classifier;
     }
