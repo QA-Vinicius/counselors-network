@@ -13,6 +13,7 @@ public class DataSaver {
         fileWriter.close();
     }
 
+
     //Metodo responsavel por salvar
     public void buildPerformanceCSV(String file, int id_conflict, double currentF1Score) throws IOException {
         FileWriter fileWriter = new FileWriter(file, true);
