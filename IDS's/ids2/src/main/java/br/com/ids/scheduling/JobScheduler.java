@@ -80,6 +80,12 @@ public class JobScheduler {
         detector = detectorProcessor.evaluationStage("Evaluation Stage - Before Advice", detector, false, true);
         detector = detectorProcessor.testStage("Testing Stage", detector, true, false, true, oneR_Detector2);
 //        System.out.println("FIM TREINO AVALIAÇÃO E TESTE");
+
+        //Chamar um reteste para avaliar como fica o f1score apos aprender com todos os conselhos que tiveram ao longo do fluxo
+        // 1- adicionar criterio de parada no consumer do response_advice para nao ficar escutando infinitamente e seguir o fluxo
+        // 2- avaliar se deve chamar a etapa de teste sem solicitar novos conselhos ou se solicitamos
+        // se nao for para solicitar, entao devemos adicionar uma flag no testStage para determinar se esta numa etapa onde deve
+        // chamar o sendRequest ou nao
     }
 
     public void processSample(ConselorsDTO request) throws Exception {
