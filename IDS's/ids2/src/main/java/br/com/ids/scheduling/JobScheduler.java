@@ -1,5 +1,6 @@
 package br.com.ids.scheduling;
 
+import br.com.ids.data.DataSaver;
 import br.com.ids.domain.Detector;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.producer.KafkaAdviceProducer;
@@ -26,6 +27,7 @@ public class JobScheduler {
     private final DetectorProcessor detectorProcessor;
     private final SampleProcessor sampleProcessor;
     private final DataLoader dataLoader;
+    private final DataSaver dataSaver;
 
     static final String NORMAL_CLASS = "BENIGN";
 
@@ -70,7 +72,10 @@ public class JobScheduler {
         // Zera todas as variaveis para avaliação
         detector.resetConters();
 
-        //Treina seus classificadores com o dataset de treino
+        // Cria o arquivo previamente que sera populado com os f1scores apos o aprendizado com cada conselho
+        dataSaver.createPerformanceCSV("resultsReport.csv");
+
+        // Treina seus classificadores com o dataset de treino
         detector = detectorProcessor.trainingStage(detector, false);
         detector = detectorProcessor.evaluationStage("Evaluation Stage - Before Advice", detector, false, true);
         detector = detectorProcessor.testStage("Testing Stage", detector, true, false, true, oneR_Detector2);

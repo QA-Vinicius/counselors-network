@@ -1,5 +1,6 @@
 package br.com.ids.domain;
 
+import br.com.ids.data.DataSaver;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.enuns.AdviceEnum;
 import br.com.ids.producer.KafkaAdviceProducer;
@@ -30,6 +31,7 @@ public class Detector {
     private final String detectorID = "2"; // id de cada conselheiro
 
     DataLoader dataLoader = new DataLoader();
+    DataSaver dataSaver = new DataSaver();
 
     SimpleKMeans kmeans;
 
@@ -43,6 +45,7 @@ public class Detector {
     int VP, VN, FP, FN;
     int conflitos = 0;
     int goodAdvices = 0;
+    int badAdvices = 0;
     String normalClass;
     boolean saveTrainInsance = true; // Ponteiro para dividir entre treino e validação
     ArrayList<Advice> historicalData = new ArrayList<>();
@@ -51,13 +54,13 @@ public class Detector {
     // Variaveis para receber as metricas de avaliacao
     List<Double> initialEvaluationAccuracies = new ArrayList<>();
     List<Double> initialEvaluationF1Scores = new ArrayList<>();
-    Double initialEvaluationAverageAccuracy;
-    Double initialEvaluationAverageF1Score;
+    Double currentEvaluationAverageAccuracy;
+    Double currentEvaluationAverageF1Score;
 
     List<Double> finalEvaluationAccuracies = new ArrayList<>();
     List<Double> finalEvaluationF1Scores = new ArrayList<>();
-    Double finalEvaluationAverageAccuracy;
-    Double finalEvaluationAverageF1Score;
+    Double newEvaluationAverageAccuracy;
+    Double newEvaluationAverageF1Score;
 
     // Variaveis para receber as metricas de teste
     List<Double> initialTestAccuracies = new ArrayList<>();
@@ -199,16 +202,19 @@ public class Detector {
             double averageF1Score = totalF1Score / classifierCount;
 
             if ("Evaluation Stage - Before Advice".equals(stage)) {
-                initialEvaluationAverageAccuracy = averageAccuracy;
-                initialEvaluationAverageF1Score = averageF1Score;
-                System.out.println("\n\t\t- Average Accuracy (" + stage + "): " + initialEvaluationAverageAccuracy);
-                System.out.println("\t\t- Average F1Score (" + stage + "): " + initialEvaluationAverageF1Score + "\n");
+                currentEvaluationAverageAccuracy = averageAccuracy;
+                currentEvaluationAverageF1Score = averageF1Score;
+                dataSaver.buildPerformanceCSV("resultsReport.csv", conflitos, currentEvaluationAverageF1Score);
+                System.out.println("\n\t\t- Average Accuracy (" + stage + "): " + currentEvaluationAverageAccuracy);
+                System.out.println("\t\t- Average F1Score (" + stage + "): " + currentEvaluationAverageF1Score + "\n");
             }
             else if ("Evaluation Stage - After Advice".equals(stage)) {
-                finalEvaluationAverageAccuracy = averageAccuracy;
-                finalEvaluationAverageF1Score = averageF1Score;
-                System.out.println("\n\t\t- Average Accuracy (" + stage + "): " + finalEvaluationAverageAccuracy);
-                System.out.println("\t\t- Average F1Score (" + stage + "): " + finalEvaluationAverageF1Score + "\n");
+                conflitos++; //apos avaliar antes do conselho, ele insere no csv o conflito=0, entao temos que incrementar para diferenciar o f1score a cada conselho
+                newEvaluationAverageAccuracy = averageAccuracy;
+                newEvaluationAverageF1Score = averageF1Score;
+                dataSaver.buildPerformanceCSV("resultsReport.csv", conflitos, newEvaluationAverageF1Score);
+                System.out.println("\n\t\t- Average Accuracy (" + stage + "): " + newEvaluationAverageAccuracy);
+                System.out.println("\t\t- Average F1Score (" + stage + "): " + newEvaluationAverageF1Score + "\n");
             }
             else if ("Testing Stage".equals(stage)) {
                 initialTestAverageAccuracy = averageAccuracy;
@@ -273,8 +279,8 @@ public class Detector {
 
             /* Se o classificador for selecionado, classificar com ele */
             if (qtdClassificadores == 0) {
-                double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress, features, adviceEnum);
-                System.out.println("[No Classifiers] Conflito n" + conflitos + " na instância " + instIndex + ", conselho: " + adviceResult + " / correto: " + correctValue);
+//                double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress, features, adviceEnum);
+//                System.out.println("[No Classifiers] Conflito n" + conflitos + " na instância " + instIndex + ", conselho: " + adviceResult + " / correto: " + correctValue);
             } else {
                 for (int classifIndex = 0; classifIndex < qtdClassificadores; classifIndex++) {
                     DetectorClassifier c = selectedClassifiers.get(classifIndex);
@@ -302,7 +308,7 @@ public class Detector {
                             // Enviar a mensagem JSON para o tópico do Kafka usando o kafkaTemplate
                             kafkaAdviceProducer.send(conselorsDTO);
 
-                            double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress, features, adviceEnum);
+//                            double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress, features, adviceEnum);
 //                            System.out.println("[Divergence Classifiers] Conflito n" + conflitos + " na instância " + instIndex + ", conselho: " + adviceResult + " / correto: " + correctValue);
                         }
                         /* Se esse for o ultimo classificador da lista, é porque nao ocorreram conflitos*/
@@ -350,10 +356,6 @@ public class Detector {
         }
     }
 
-    public int getConflitos() {
-        return conflitos;
-    }
-
     public void resetConters() {
         for (DetectorClusterService cluster : clusters) {
             for (DetectorClassifier classifier : cluster.getClassifiers()) {
@@ -366,6 +368,26 @@ public class Detector {
         setFN(0);
         setFP(0);
         conflitos = 0;
+    }
+
+    public int getCountTestInstances() {
+        return testInstances.size();
+    }
+
+    public ArrayList<Advice> getHistoricalData() {
+        return historicalData;
+    }
+
+    public int getConflitos() {
+        return conflitos;
+    }
+
+    public int getGoodAdvices() {
+        return goodAdvices;
+    }
+
+    public int getBadAdvices() {
+        return badAdvices;
     }
 
     public int getVP() {
@@ -432,19 +454,6 @@ public class Detector {
 //            System.out.println(e.getLocalizedMessage());
         }
         return -1;
-    }
-
-
-    public int getCountTestInstances() {
-        return testInstances.size();
-    }
-
-    public ArrayList<Advice> getHistoricalData() {
-        return historicalData;
-    }
-
-    public int getGoodAdvices() {
-        return goodAdvices;
     }
 
     private double handleConflict(boolean enableAdvice, double correctValue,
@@ -665,17 +674,19 @@ public class Detector {
 
     public void sendFeedback(int id_sample, double[] sample, double result) {
         //Comparar a diferenca de f1Score e acuracia
-        deltaF1Score = finalEvaluationAverageF1Score - initialEvaluationAverageF1Score;
-        deltaAccuracy = finalEvaluationAverageAccuracy - initialTestAverageAccuracy;
+        deltaF1Score = newEvaluationAverageF1Score - currentEvaluationAverageF1Score;
+        deltaAccuracy = newEvaluationAverageAccuracy - currentEvaluationAverageAccuracy;
 
-        System.out.println("\t\t- Delta F1-Score: " + deltaF1Score);
+        System.out.println("\t\t- Delta F1-Score: " + newEvaluationAverageF1Score + " - " + currentEvaluationAverageF1Score + " = " + deltaF1Score);
         System.out.println("\t\t- Delta Accuracy: " + deltaAccuracy);
 
         String feedback = "";
-        if(deltaF1Score > 0.0) {
+        if(deltaF1Score >= 0.0) {
+            goodAdvices++;
             System.out.println("\t\t- Feedback positivo!\n");
             feedback = "Positive";
         } else {
+            badAdvices++;
             System.out.println("\t\t- Feedback negativo!\n");
             feedback = "Negative";
         }
@@ -687,12 +698,19 @@ public class Detector {
                 .feedback(feedback)
                 .sample(sample)
                 .result(result)
-                .f1score(finalEvaluationAverageF1Score)
+                .f1score(newEvaluationAverageF1Score)
                 .deltaF1Score(deltaF1Score)
                 .timestamp(System.currentTimeMillis())
                 .build();
 
         ObjectMapper mapper = new ObjectMapper();
         kafkaFeedbackProducer.sendFeedback(conselorsDTO);
+
+        // Para continuar a comparacao do F1Score atual com base no ultimo, precisamos atualizar a variavel currentF1Score
+        // com o valor do newF1Score, pois agora ele passara a ser o atual, e sua variavel original sera sobrescrita ao avaliar o novo conselho recebido
+        currentEvaluationAverageF1Score = newEvaluationAverageF1Score;
+
+        // o mesmo deve ser feito para a acuracia
+        currentEvaluationAverageAccuracy = newEvaluationAverageAccuracy;
     }
 }

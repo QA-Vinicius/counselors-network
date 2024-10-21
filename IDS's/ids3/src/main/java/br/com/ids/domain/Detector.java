@@ -73,7 +73,7 @@ public class Detector {
         kmeans.setSeed(seed);
         kmeans.setPreserveInstancesOrder(true);
         kmeans.setNumClusters(k);
-        System.out.println("DEBUG EVALUATION NO LABEL: " + evaluationInstancesNoLabel.lastInstance().numAttributes());
+//        System.out.println("DEBUG EVALUATION NO LABEL: " + evaluationInstancesNoLabel.lastInstance().numAttributes());
         kmeans.buildClusterer(evaluationInstancesNoLabel);
 
         for (int ki = 0; ki < k; ki++) {

@@ -68,5 +68,8 @@ public class SampleProcessor {
 
         System.out.println("\t5- Comparing metrics and giving feedback");
         detector.sendFeedback(conselorsDTO.getId_sample(), sample, sampleLabel);
+
+        System.out.println("\t\t- Good Advices: " + detector.getGoodAdvices() + "/" + detector.getConflitos());
+        System.out.println("\t\t- Bad Advices: " + detector.getBadAdvices() + "/" + detector.getConflitos());
     }
 }
