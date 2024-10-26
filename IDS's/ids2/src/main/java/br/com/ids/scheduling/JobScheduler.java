@@ -95,4 +95,8 @@ public class JobScheduler {
     public void learnWithAdvice(ConselorsDTO conselorsDTO) throws Exception {
         sampleProcessor.learnWithAdvice(conselorsDTO, detector);
     }
+
+    public void analyzeFinalPerformance(ConselorsDTO conselorsDTO) throws Exception {
+        sampleProcessor.analyzeFinalPerformance(conselorsDTO, detector);
+    }
 }

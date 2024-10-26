@@ -17,6 +17,9 @@ public class SampleProcessor {
 
     private final DetectorProcessor detectorProcessor;
 
+    // Variavel criada apenas para preencher parametros obrigatorios do testStage
+    int[] noFeatureSelection = new int[]{};
+
     @Autowired
     public SampleProcessor(DetectorProcessor detectorProcessor) {
         this.detectorProcessor = detectorProcessor;
@@ -67,9 +70,37 @@ public class SampleProcessor {
         detector = detectorProcessor.evaluationStage("Evaluation Stage - After Advice", detector, false, true);
 
         System.out.println("\t5- Comparing metrics and giving feedback");
-        detector.sendFeedback(conselorsDTO.getId_sample(), sample, sampleLabel);
+        String feedback = detector.sendFeedback(conselorsDTO.getId_sample(), sample, sampleLabel);
+
+        if(feedback.equals("Negative")) {
+            System.out.print("\t\t-- Removing instance from dataset because feedback was negative!");
+            trainInstances.delete(trainInstances.numInstances() - 1); //indice da  ultima instancia adicionada
+
+            System.out.println(" (New trainInstances: " + trainInstances.size() + ")");
+        }
 
         System.out.println("\t\t- Good Advices: " + detector.getGoodAdvices() + "/" + detector.getConflitos());
         System.out.println("\t\t- Bad Advices: " + detector.getBadAdvices() + "/" + detector.getConflitos());
+    }
+
+    public void analyzeFinalPerformance(ConselorsDTO conselorsDTO, Detector detector) throws Exception {
+        System.out.println("\n\n------------------------------------------------------------------------");
+        System.out.println("\n\n-- Analyzing the final performance of the detector");
+        System.out.println("\n\n------------------------------------------------------------------------");
+
+        System.out.println("-- Retraining the classifiers with new instances");
+        detector = detectorProcessor.trainingStage(detector, false);
+
+        System.out.println("-- Reevaluating the classifiers");
+        detector = detectorProcessor.evaluationStage("Evaluation Stage - Final", detector, false, true);
+
+        // Zera todas as variaveis para avaliação
+        detector.resetConters();
+
+        System.out.println("-- Retesting to validate final performance");
+        detector = detectorProcessor.testStage("Testing Stage - Final",  detector, true, false, true, noFeatureSelection);
+
+        System.out.println("-- Comparing Test Stage metrics");
+        detector.compareTestMetrics();
     }
 }
