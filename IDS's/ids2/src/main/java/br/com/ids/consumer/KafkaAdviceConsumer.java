@@ -1,5 +1,6 @@
 package br.com.ids.consumer;
 
+import br.com.ids.domain.Detector;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.service.AdviceResponseCache;
 import br.com.ids.service.AdviceService;
@@ -21,11 +22,19 @@ public class KafkaAdviceConsumer {
     @Autowired
     private AdviceResponseCache responseCache;
 
+    private Detector detector;
+
+    // Variaveis para determinar o criterio de parada do consumer para o RESPONSE_ADVICE
+    private int responseAdviceCount = 0;
+    private int numConflicts; // Ira receber o numero de conflitos que tiveram. sabemos que para cada conflito teremos 2 conselhos (RESPONSE_ADVICE)
+
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
     @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup2", containerFactory = "jsonKafkaListenerContainer")
     public void consumer(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
+//        numConflicts = detector.getConflitos();
         logg.info("Received Message from Partition: " + record.partition() + ", Offset: " + record.offset());
+//        logg.info("Validando numero de conflitos: " + numConflicts);
         final var time = System.currentTimeMillis();
 
         System.out.println("\n\t---------------------- NEW MESSAGE ----------------------");
@@ -48,6 +57,15 @@ public class KafkaAdviceConsumer {
                     if(responseCache.stoppingCriterion(record.value().getId_sample())) {
                         ConselorsDTO bestAdvice = responseCache.getBestAdvice(record.value().getId_sample());
                         adviceService.learnWithAdvice(bestAdvice);
+                    }
+
+                    responseAdviceCount++;
+                    if(responseAdviceCount >= 88) { //numConflicts*2
+                        logg.info("Received all possible RESPONSE_ADVICE messages, stopping consumer!");
+
+                        // Avaliar como ficou o detector apos os aprendizados com conselhos
+                        adviceService.analyzeFinalPerformance(record.value());
+                        return;
                     }
                 }catch(Exception ex){
                     throw ex;

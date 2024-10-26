@@ -33,9 +33,40 @@ public class DetectorProcessor {
     public Detector testStage(String stage, Detector detec, boolean advices, boolean printEvaluation, boolean showProgress, int[] features) throws Exception {
         /* Evaluation Phase */
         System.out.println("\t3- Testing Stage");
+        System.out.println("\t\tTesting with " + detec.getCountTestInstances() + " instances.\n");
         detec.clusterAndTestSample(stage, advices, true, true, printEvaluation, showProgress, features, AdviceEnum.REQUEST_ADVICE);
 
         System.out.println("\n\tEnd of testing stage");
+
+        if(stage.equals("Testing Stage")) {
+            System.out.println("\tTotal conflicts found: " + detec.getConflitos());
+            detec.conflitosBeforeAdvices = detec.getConflitos();
+
+            System.out.println("\tAdded instances: " + detec.getInstanciasAdicionadas());
+            System.out.println("\tNew TrainInstances size: " + detec.trainInstances.size());
+
+            // Obtivemos as medias de cada cluster, agora temos que calcular a media geral dos clusters
+            double totalAverageAccuracy = detec.getSumAverageAccuracyInitialTest()/detec.getCountTestAverages();
+            detec.setTotalAverageAccuracyInitialTest(totalAverageAccuracy);
+            System.out.println("\n\tTotal average Accuracy in the initial Testing Stage: " + totalAverageAccuracy);
+
+            double totalAverageF1Score = detec.getSumAverageF1ScoreInitialTest()/detec.getCountTestAverages();
+            detec.setTotalAverageF1ScoreInitialTest(totalAverageF1Score);
+            System.out.println("\tTotal average F1-Score in the initial Testing Stage: " + totalAverageF1Score);
+
+            // Zerando o contador das medias de test para proxima etapa
+            detec.setCountTestAverages(0);
+        } else if(stage.equals("Testing Stage - Final")) {
+            double totalAverageAccuracy = detec.getSumAverageAccuracyFinalTest()/detec.getCountTestAverages();
+            detec.setTotalAverageAccuracyFinalTest(totalAverageAccuracy);
+            System.out.println("\tTotal average Accuracy in the final Testing Stage: " + totalAverageAccuracy);
+
+            double totalAverageF1Score = detec.getSumAverageF1ScoreFinalTest()/detec.getCountTestAverages();
+            detec.setTotalAverageF1ScoreFinalTest(totalAverageF1Score);
+            System.out.println("\tTotal average F1-Score in the final Testing Stage: " + totalAverageF1Score);
+
+            detec.setCountTestAverages(0);
+        }
         System.out.println("------------------------------------------------------------------------");
 
         return detec;

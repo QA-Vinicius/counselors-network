@@ -25,7 +25,7 @@ public class ConselorsDTO {
     private double[] sample;
 
     @JsonProperty("f1score")
-    private double f1score;
+    private Double f1score;
 
 //    @JsonProperty("attack") // adaptacao para multiclass
 //    private boolean attack;

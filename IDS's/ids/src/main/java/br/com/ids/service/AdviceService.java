@@ -4,11 +4,6 @@ import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.scheduling.JobScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import weka.core.DenseInstance;
-import weka.core.Instance;
-import weka.core.Instances;
-
-import static org.apache.kafka.common.requests.DeleteAclsResponse.log;
 
 @Service
 public class AdviceService {
