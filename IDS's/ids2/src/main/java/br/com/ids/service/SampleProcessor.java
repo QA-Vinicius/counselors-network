@@ -72,12 +72,12 @@ public class SampleProcessor {
         System.out.println("\t5- Comparing metrics and giving feedback");
         String feedback = detector.sendFeedback(conselorsDTO.getId_sample(), sample, sampleLabel);
 
-        if(feedback.equals("Negative")) {
-            System.out.print("\t\t-- Removing instance from dataset because feedback was negative!");
-            trainInstances.delete(trainInstances.numInstances() - 1); //indice da  ultima instancia adicionada
-
-            System.out.println(" (New trainInstances: " + trainInstances.size() + ")");
-        }
+//        if(feedback.equals("Negative")) {
+//            System.out.print("\t\t-- Removing instance from dataset because feedback was negative!");
+//            trainInstances.delete(trainInstances.numInstances() - 1); //indice da  ultima instancia adicionada
+//
+//            System.out.println(" (New trainInstances: " + trainInstances.size() + ")");
+//        }
 
         System.out.println("\t\t- Good Advices: " + detector.getGoodAdvices() + "/" + detector.getConflitos());
         System.out.println("\t\t- Bad Advices: " + detector.getBadAdvices() + "/" + detector.getConflitos());

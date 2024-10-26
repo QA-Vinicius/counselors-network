@@ -267,7 +267,7 @@ public class Detector {
             flagConflict = false; // flag para identificar se teve ou nao conflito - reseta aqui para nao impactar na amostra
 
             // System.out.println("#############");
-            // System.out.println("##  Testando - " + instIndex + "/" + testInstances.size());
+             System.out.println("##  Testando - " + instIndex);
             // System.out.println("#############");
             /* Instância Atual */
             Instance instance = testInstances.get(instIndex);
@@ -279,20 +279,20 @@ public class Detector {
                 }
             }
 
-            if (nextPoint == instIndex) {
-                nextPoint = nextPoint + percentRetrofeed;
-                strTestAcc = strTestAcc + getDetectionAccuracyString() + ";";
+//            if (nextPoint == instIndex) {
+//                nextPoint = nextPoint + percentRetrofeed;
+//                strTestAcc = strTestAcc + getDetectionAccuracyString() + ";";
 //                System.out.println("\n\n\n\nAcc;" + strTestAcc);// + ";" + trainInstances.size() + ";" + evaluationInstances.size());
-                if (learnWithoutAdvices) {
-                    trainClassifiers(false);
-                    evaluateClassifiersPerCluster(stage, printEvaResults, showProgress);
-                }
-
-                //Print to validate the best accuracies obtained from the cluster for each sample in it
-                //for (DetectorClusterService cluster : clusters) {
-                //    cluster.printStrEvaluation();
-                //}
-            }
+//                if (learnWithoutAdvices) {
+//                    trainClassifiers(false);
+//                    evaluateClassifiersPerCluster(stage, printEvaResults, showProgress);
+//                }
+//
+//                Print to validate the best accuracies obtained from the cluster for each sample in it
+//                for (DetectorClusterService cluster : clusters) {
+//                    cluster.printStrEvaluation();
+//                }
+//            }
 
             Instance evaluatingPeer = testInstancesNoLabel.get(instIndex);
             double[] sample = evaluatingPeer.toDoubleArray();
@@ -387,21 +387,21 @@ public class Detector {
 //                        historicalData.add(instIndex, new Advice(c.evaluationAccuracy, result, correctValue, normalClass));
                         updateResults(result, correctValue, instance);
                         /* Aprende sem Conflitos*/
-                        if (flagConflict == false) {
-                            if (saveTrainInsance) {
-                                trainInstances.add(instance); // Realimenta a cada amostra testada sem conflitos
-                                instanciasAdicionadas++;
-
+//                        if (flagConflict == false) {
+//                            if (saveTrainInsance) {
+//                                trainInstances.add(instance); // Realimenta a cada amostra testada sem conflitos
+//                                instanciasAdicionadas++;
+//
 //                                System.out.println("\t\tNão houve conflitos! Aprendeu com a instancia " + instIndex + " [" + instance + "].");
 //                                System.out.println("\t\tTamanho do trainInstances apos nova instancia: " + trainInstances.size() + "\n");
-                            }
+//                            }
 //                            else {
 //                                evaluationInstancesNoLabel.add(evaluatingPeer); // Realimenta a cada amostra testada sem conflitos
 //                                evaluationInstances.add(instance);
 //                                saveTrainInsance = true;
 //                            System.out.println("Aprendeu com conflito.");
 //                            }
-                        }
+//                        }
                     }
                 }
             }

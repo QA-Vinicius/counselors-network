@@ -42,8 +42,8 @@ public class DetectorProcessor {
             System.out.println("\tTotal conflicts found: " + detec.getConflitos());
             detec.conflitosBeforeAdvices = detec.getConflitos();
 
-            System.out.println("\tAdded instances: " + detec.getInstanciasAdicionadas());
-            System.out.println("\tNew TrainInstances size: " + detec.trainInstances.size());
+//            System.out.println("\tAdded instances: " + detec.getInstanciasAdicionadas());
+//            System.out.println("\tNew TrainInstances size: " + detec.trainInstances.size());
 
             // Obtivemos as medias de cada cluster, agora temos que calcular a media geral dos clusters
             double totalAverageAccuracy = detec.getSumAverageAccuracyInitialTest()/detec.getCountTestAverages();
