@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static br.com.ids.service.ConflictService.*;
+import static br.com.ids.service.ConflictService.increasesConflicts;
+
 /**
  * @author vinicius
  */
@@ -45,7 +48,6 @@ public class Detector {
     boolean flagConflict = false; //flag para indicar se houve ou nao conflito, se nao houver, a amostra sera adicionada no dataset de treino
     int indexConflito = 0; // indice para adicionarmos no csv e monitorar a evolucao do f1score a cada conflito
     int instanciasAdicionadas = 0; //contador de instancias adicionadas no trainDataset quando nao tem conflito
-    int conflitos = 0;
     int goodAdvices = 0;
     int badAdvices = 0;
     String normalClass;
@@ -184,6 +186,15 @@ public class Detector {
             evaluationInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
             cluster.evaluateClassifiers(evaluationInstances);
 
+//            if(stage.contains("Evaluation Stage")){
+//                evaluationInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
+//                cluster.evaluateClassifiers(evaluationInstances);
+//            } else if(stage.contains("Testing Stage")) {
+//                testInstances.setClassIndex(evaluationInstances.numAttributes() - 1);
+//                cluster.evaluateClassifiers(evaluationInstances);
+//            }
+
+
             System.out.println("\n");
             // Obter as métricas de cada classificador e acumular
             for (DetectorClassifier c : cluster.getClassifiers()) {
@@ -234,6 +245,10 @@ public class Detector {
                 sumAverageAccuracyInitialTest += averageAccuracy;
                 sumAverageF1ScoreInitialTest += averageF1Score;
                 countTestAverages++;
+
+                System.out.println("SOMA MEDIA ACURACIA: " + sumAverageAccuracyInitialTest);
+                System.out.println("SOMA MEDIA F1-SCORE: " + sumAverageF1ScoreInitialTest);
+                System.out.println("SOMA CONTADOR: " + countTestAverages);
             }
             else if ("Testing Stage - Final".equals(stage)) {
 //                finalTestAverageAccuracy = averageAccuracy;
@@ -303,8 +318,8 @@ public class Detector {
 
             if(stage.equals("Testing Stage - Final")) {
                 if(qtdClassificadores == 0) {
-                    conflitos++;
-                    System.out.println("[Sem classificadores] Total de conflitos encontrados: " + conflitos + " | Amostra: " + instIndex + "\n");
+                    increasesConflicts();
+                    System.out.println("Total de conflitos encontrados: " + getConflitos() + " | Amostra: " + instIndex + " [Sem classificadores]\n");
                 } else {
                     for (int classifIndex = 0; classifIndex < qtdClassificadores; classifIndex++) {
                         DetectorClassifier c = selectedClassifiers.get(classifIndex);
@@ -316,8 +331,8 @@ public class Detector {
                         if (classifIndex > 0 && classifIndex < qtdClassificadores - 1 && selectedClassifiers.size() > 1) {
                             // Checa conflito com o anterior
                             if (classifiersOutput[classifIndex][instIndex] != classifiersOutput[classifIndex - 1][instIndex]) {
-                                conflitos++;
-                                System.out.println("Total de conflitos encontrados: " + conflitos + " | Amostra: " + instIndex + "\n");
+                                increasesConflicts();
+                                System.out.println("Total de conflitos encontrados: " + getConflitos() + " | Amostra: " + instIndex + "\n");
 
                                 break;
                             }
@@ -327,8 +342,8 @@ public class Detector {
                 }
             } else if (qtdClassificadores == 0) {  /* Se o classificador for selecionado, classificar com ele */
                 flagConflict = true;
-                conflitos++;
-                System.out.println("[Sem classificadores] Total de conflitos encontrados: " + conflitos + " | Amostra: " + instIndex + "\n");
+                increasesConflicts();
+                System.out.println("Total de conflitos encontrados: " + getConflitos() + " | Amostra: " + instIndex + " [Sem classificadores]\n");
 
                 ConselorsDTO conselorsDTO = ConselorsDTO.builder()
                         .id_conselheiro(detectorID)
@@ -359,8 +374,8 @@ public class Detector {
                         // Checa conflito com o anterior
                         if (classifiersOutput[classifIndex][instIndex] != classifiersOutput[classifIndex - 1][instIndex]) {
                             flagConflict = true;
-                            conflitos++;
-                            System.out.println("Total de conflitos encontrados: " + conflitos + " | Amostra: " + instIndex + "\n");
+                            increasesConflicts();
+                            System.out.println("Total de conflitos encontrados: " + getConflitos() + " | Amostra: " + instIndex + "\n");
 
                             ConselorsDTO conselorsDTO = ConselorsDTO.builder()
                                 .id_conselheiro(detectorID)
@@ -388,10 +403,11 @@ public class Detector {
                         updateResults(result, correctValue, instance);
                         /* Aprende sem Conflitos*/
                         if (flagConflict == false) {
+                            System.out.println("\t\tNão houve conflito para a amostra ["+instIndex+"] | F1-Score: " + c.getEvaluationF1Score());
                             if (saveTrainInsance) {
-                                trainInstances.add(instance); // Realimenta a cada amostra testada sem conflitos
-                                instanciasAdicionadas++;
-
+//                                trainInstances.add(instance); // Realimenta a cada amostra testada sem conflitos
+//                                instanciasAdicionadas++;
+//
 //                                System.out.println("\t\tNão houve conflitos! Aprendeu com a instancia " + instIndex + " [" + instance + "].");
 //                                System.out.println("\t\tTamanho do trainInstances apos nova instancia: " + trainInstances.size() + "\n");
                             }
@@ -440,7 +456,7 @@ public class Detector {
         setVP(0);
         setFN(0);
         setFP(0);
-        conflitos = 0;
+        resetConflicts();
     }
 
     public int getCountTestInstances() {
@@ -449,10 +465,6 @@ public class Detector {
 
     public ArrayList<Advice> getHistoricalData() {
         return historicalData;
-    }
-
-    public int getConflitos() {
-        return conflitos;
     }
 
     public int getGoodAdvices() {
@@ -580,7 +592,7 @@ public class Detector {
     private double handleConflict(boolean enableAdvice, double correctValue,
             int instIndex, Instance instance, boolean learnWithAdvice, Instance evaluatingPeer, boolean printEvaResu, boolean showProgress, int[] features, AdviceEnum adviceEnum) throws Exception {
         historicalData.add(new Advice(0, 6, correctValue, normalClass));
-        conflitos = conflitos + 1;
+        increasesConflicts();
 
         // flag para validar se ha ou nao detectores para o detector solicitante (continua 77 em caso de nao haver)
         double result = 6;
@@ -839,8 +851,8 @@ public class Detector {
 
     public void compareTestMetrics() {
         System.out.println("\t1- CONFLICTS: ");
-        System.out.println("\tInitial: " + conflitosBeforeAdvices + " | Final: " + conflitos);
-        int deltaConflicts = conflitosBeforeAdvices - conflitos;
+        System.out.println("\tInitial: " + conflitosBeforeAdvices + " | Final: " + getConflitos());
+        int deltaConflicts = conflitosBeforeAdvices - getConflitos();
         System.out.println("\t-> Reduction of " + deltaConflicts + " conflicts after learning from advice!");
 
         System.out.println("\n\t2- F1-SCORE:");

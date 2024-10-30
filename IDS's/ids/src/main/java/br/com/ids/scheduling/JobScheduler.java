@@ -52,14 +52,14 @@ public class JobScheduler {
          * Nesta etapa instanciamos o primeiro Detector e seus respectivos dataSets de treino, avaliação e testes
          * essa etapa deve ser iniciada ao instanciar um IDS
          * */
-        Instances trainInstances = leadAndFilter(false, "1output1k.csv", oneR_Detector1);
-        Instances evaluationInstances = leadAndFilter(false, "2output1k.csv", oneR_Detector1);
-        Instances testInstances = leadAndFilter(false, "3output1k.csv", oneR_Detector1);
+        Instances trainInstances = leadAndFilter(false, "c1-train.arff", oneR_Detector1);
+        Instances evaluationInstances = leadAndFilter(false, "c1-eval.arff", oneR_Detector1);
+        Instances testInstances = leadAndFilter(false, "c1-test.arff", oneR_Detector1);
 
         detector = new Detector(kafkaAdviceProducer, kafkaFeedbackProducer, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS);
 
         // Metodo para abstrair classes do CSV
-        detector.loadClassValues("1output1k.csv");
+        detector.loadClassValues("c1-train.arff");
         // Instancia a quantidade  clusters
         detector.createClusters(5, 2);
 

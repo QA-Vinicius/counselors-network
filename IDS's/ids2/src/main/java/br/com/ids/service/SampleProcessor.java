@@ -11,6 +11,7 @@ import weka.core.Instances;
 import java.util.Arrays;
 
 import static br.com.ids.domain.Detector.classValueMap;
+import static br.com.ids.service.ConflictService.getConflitos;
 
 @Component
 public class SampleProcessor {
@@ -72,15 +73,15 @@ public class SampleProcessor {
         System.out.println("\t5- Comparing metrics and giving feedback");
         String feedback = detector.sendFeedback(conselorsDTO.getId_sample(), sample, sampleLabel);
 
-        if(feedback.equals("Negative")) {
-            System.out.print("\t\t-- Removing instance from dataset because feedback was negative!");
-            trainInstances.delete(trainInstances.numInstances() - 1); //indice da  ultima instancia adicionada
+//        if(feedback.equals("Negative")) {
+//            System.out.print("\t\t-- Removing instance from dataset because feedback was negative!");
+//            trainInstances.delete(trainInstances.numInstances() - 1); //indice da  ultima instancia adicionada
+//
+//            System.out.println(" (New trainInstances: " + trainInstances.size() + ")");
+//        }
 
-            System.out.println(" (New trainInstances: " + trainInstances.size() + ")");
-        }
-
-        System.out.println("\t\t- Good Advices: " + detector.getGoodAdvices() + "/" + detector.getConflitos());
-        System.out.println("\t\t- Bad Advices: " + detector.getBadAdvices() + "/" + detector.getConflitos());
+        System.out.println("\t\t- Good Advices: " + detector.getGoodAdvices() + "/" + getConflitos());
+        System.out.println("\t\t- Bad Advices: " + detector.getBadAdvices() + "/" + getConflitos());
     }
 
     public void analyzeFinalPerformance(ConselorsDTO conselorsDTO, Detector detector) throws Exception {

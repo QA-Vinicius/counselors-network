@@ -1,6 +1,5 @@
 package br.com.ids.consumer;
 
-import br.com.ids.domain.Detector;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.service.AdviceResponseCache;
 import br.com.ids.service.AdviceService;
@@ -12,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import static br.com.ids.service.ConflictService.consumerStoppingCriterion;
+import static br.com.ids.service.ConflictService.getConflitos;
+
 @Component
 @Slf4j
 public class KafkaAdviceConsumer {
@@ -21,8 +23,6 @@ public class KafkaAdviceConsumer {
 
     @Autowired
     private AdviceResponseCache responseCache;
-
-    private Detector detector;
 
     // Variaveis para determinar o criterio de parada do consumer para o RESPONSE_ADVICE
     private int responseAdviceCount = 0;
@@ -60,7 +60,7 @@ public class KafkaAdviceConsumer {
                     }
 
                     responseAdviceCount++;
-                    if(responseAdviceCount >= 88) { //numConflicts*2
+                    if(responseAdviceCount >= consumerStoppingCriterion()) {
                         logg.info("Received all possible RESPONSE_ADVICE messages, stopping consumer!");
 
                         // Avaliar como ficou o detector apos os aprendizados com conselhos

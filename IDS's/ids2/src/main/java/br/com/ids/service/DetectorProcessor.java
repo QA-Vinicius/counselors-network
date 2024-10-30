@@ -5,6 +5,8 @@ import br.com.ids.domain.DetectorClassifier;
 import br.com.ids.enuns.AdviceEnum;
 import org.springframework.stereotype.Component;
 
+import static br.com.ids.service.ConflictService.getConflitos;
+
 @Component
 public class DetectorProcessor {
     public Detector trainingStage(Detector detec, boolean printTrain) throws Exception {
@@ -34,13 +36,15 @@ public class DetectorProcessor {
         /* Evaluation Phase */
         System.out.println("\t3- Testing Stage");
         System.out.println("\t\tTesting with " + detec.getCountTestInstances() + " instances.\n");
+
+        detec.resetConters();
         detec.clusterAndTestSample(stage, advices, true, true, printEvaluation, showProgress, features, AdviceEnum.REQUEST_ADVICE);
 
         System.out.println("\n\tEnd of testing stage");
 
         if(stage.equals("Testing Stage")) {
-            System.out.println("\tTotal conflicts found: " + detec.getConflitos());
-            detec.conflitosBeforeAdvices = detec.getConflitos();
+            System.out.println("\tTotal conflicts found: " + getConflitos());
+            detec.conflitosBeforeAdvices = getConflitos();
 
             System.out.println("\tAdded instances: " + detec.getInstanciasAdicionadas());
             System.out.println("\tNew TrainInstances size: " + detec.trainInstances.size());
@@ -113,7 +117,7 @@ public class DetectorProcessor {
         }
 
         System.out.println("------------------------------------------------------------------------");
-        System.out.println("  --  Test Summary: [Solucionados "+ D2.getGoodAdvices()+"/"+ D2.getConflitos() + " conflitos de " + (D2.getVP() + D2.getVN() + D2.getFP() + D2.getFN()) + " classificações.] \n "
+        System.out.println("  --  Test Summary: [Solucionados "+ D2.getGoodAdvices()+"/"+ getConflitos() + " conflitos de " + (D2.getVP() + D2.getVN() + D2.getFP() + D2.getFN()) + " classificações.] \n "
                 + "VP	VN	FP	FN	F1Score \n"
                 + D2.getVP() + ";" + D2.getVN() + ";" + D2.getFP() + ";" + D2.getFN() + ";" + String.valueOf(D2.getDetectionF1Score()).replace(".", ","));
         System.out.println("------------------------------------------------------------------------");

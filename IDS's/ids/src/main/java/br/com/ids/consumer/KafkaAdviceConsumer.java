@@ -10,12 +10,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Component
 @Slf4j
 public class KafkaAdviceConsumer {
 
     @Autowired
     private AdviceService adviceService;
+
+    private final Set<Integer> processedSamples = ConcurrentHashMap.newKeySet();
 
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
@@ -31,11 +36,19 @@ public class KafkaAdviceConsumer {
 
         if(!record.value().getId_conselheiro().equals("1")){
             if (record.value().getFlag().equals("REQUEST_ADVICE")) {
-                try{
-                    Thread.sleep(15000);
-                    adviceService.generatesAdvice(record.value());
-                }catch(Exception ex){
-                    throw ex;
+                int id_sample = record.value().getId_sample();
+
+                if(!processedSamples.contains(id_sample)) {
+                    processedSamples.add(id_sample);
+                    try{
+                        Thread.sleep(15000);
+                        adviceService.generatesAdvice(record.value());
+                    }catch(Exception ex){
+                        throw ex;
+                    }
+                } else {
+                    System.out.println("\tThis sample (" + id_sample + ") has already been processed!");
+//                    logg.info("This sample (" + id_sample + ") has already been processed!");
                 }
             }
             if (record.value().getFlag().equals("RESPONSE_ADVICE")) {

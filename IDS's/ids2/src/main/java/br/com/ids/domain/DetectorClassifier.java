@@ -23,10 +23,14 @@ public class DetectorClassifier {
     Classifier classifier;
     String name;
     double evaluationAccuracy;
-    private double[] f1Scores;
     double evaluationF1Score;
+    private double[] f1Scores;
     double testAccuracy;
+    double testF1Score;
+    double testSampleAccuracy;
+    double testSampleF1Score;
     int VP, VN, FP, FN;
+    int testVP = 0, testVN = 0, testFP = 0, testFN = 0;
     long evaluationNanotime = 0;
     long testNanotime = 0;
     long trainNanotime = 0;
@@ -42,6 +46,13 @@ public class DetectorClassifier {
     public double classify(Instance singleInstance) throws Exception {
 //        System.out.println(getName() + " classificando: " + singleInstance);
         return this.classifier.classifyInstance(singleInstance);
+    }
+
+    public void resetTestConters() {
+        setTestVN(0);
+        setTestVP(0);
+        setTestFN(0);
+        setTestFP(0);
     }
 
     public void resetConters() {
@@ -129,19 +140,25 @@ public class DetectorClassifier {
         long currentTime = System.nanoTime();
         double result = classify(instance);
         testNanotime = testNanotime + (currentTime - System.nanoTime());
+
         if (result == instance.classValue()) {
             if (instance.stringValue(instance.attribute(instance.classIndex())).equals(normalClass)) {
-                VN = VN + 1;
+//                VN = VN + 1;
+                testVN++;
             } else {
-                VP = VP + 1;
+//                VP = VP + 1;
+                testVP++;
             }
         } else {
             if (instance.stringValue(instance.attribute(instance.classIndex())).equals(normalClass)) {
                 FP = FP + 1;
+                testFP++;
             } else {
                 FN = FN + 1;
+                testFN++;
             }
         }
+
         return result;
     }
 }
