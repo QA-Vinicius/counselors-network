@@ -8,9 +8,13 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 
 import static br.com.ids.domain.Detector.classValueMap;
+import static br.com.ids.domain.Detector.formato_br;
 import static br.com.ids.service.ConflictService.getConflitos;
 
 @Component
@@ -32,6 +36,10 @@ public class SampleProcessor {
     }
 
     public void learnWithAdvice(ConselorsDTO conselorsDTO, Detector detector) throws Exception {
+        Instant inicio = Instant.now();
+        LocalDateTime horaInicio = LocalDateTime.ofInstant(inicio, ZoneId.systemDefault());
+        System.out.println("[IDS 2] Hora de inicio do learn: " + horaInicio.format(formato_br));
+
         System.out.println("\n\tAction: Learn With Advice");
         if (detector == null) {
             throw new IllegalStateException("\t[ERROR] Detector is not initialized.");
@@ -64,24 +72,33 @@ public class SampleProcessor {
         System.out.println("\t3- Adding instance to trainInstances");
         trainInstances.add(newTrainInstance);
 
-//        System.out.println("TAMANHO INSTANCIA DE TREINO: " + trainInstances.numAttributes());
-
-        System.out.println("\t4- Retraining the classifiers \n");
+        System.out.println("\t4- Retraining and reevaluating the classifiers\n");
         detector = detectorProcessor.trainingStage(detector, false);
         detector = detectorProcessor.evaluationStage("Evaluation Stage - After Advice", detector, false, true);
 
         System.out.println("\t5- Comparing metrics and giving feedback");
         String feedback = detector.sendFeedback(conselorsDTO.getId_sample(), sample, sampleLabel);
 
+        System.out.println("\t\t- Good Advices (based on Evaluation Stage): " + detector.getGoodAdvices() + "/" + getConflitos());
+        System.out.println("\t\t- Bad Advices (based on Evaluation Stage): " + detector.getBadAdvices() + "/" + getConflitos());
+
+        Instant fim = Instant.now();
+        LocalDateTime horafim = LocalDateTime.ofInstant(fim, ZoneId.systemDefault());
+        System.out.println("[IDS 2] Hora de fim do learn (train and evaluate): " + horafim.format(formato_br));
+
 //        if(feedback.equals("Negative")) {
 //            System.out.print("\t\t-- Removing instance from dataset because feedback was negative!");
 //            trainInstances.delete(trainInstances.numInstances() - 1); //indice da  ultima instancia adicionada
 //
 //            System.out.println(" (New trainInstances: " + trainInstances.size() + ")");
+//        } else {
+//            System.out.println("\t6- Retesting!");
+//            detector.resetConters();
+//            detector = detectorProcessor.retestStage("Testing Stage - After each Advice", detector, conselorsDTO, false, true);
+//
+//            System.out.println("\n\n\t-- Comparing Test Stage metrics");
+//            detector.compareTestMetrics(false);
 //        }
-
-        System.out.println("\t\t- Good Advices: " + detector.getGoodAdvices() + "/" + getConflitos());
-        System.out.println("\t\t- Bad Advices: " + detector.getBadAdvices() + "/" + getConflitos());
     }
 
     public void analyzeFinalPerformance(ConselorsDTO conselorsDTO, Detector detector) throws Exception {
@@ -102,6 +119,6 @@ public class SampleProcessor {
         detector = detectorProcessor.testStage("Testing Stage - Final",  detector, true, false, true, noFeatureSelection);
 
         System.out.println("-- Comparing Test Stage metrics");
-        detector.compareTestMetrics();
+        detector.compareTestMetrics(true);
     }
 }

@@ -10,6 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,6 +24,8 @@ public class KafkaAdviceConsumer {
 
     @Autowired
     private AdviceService adviceService;
+
+    private static final DateTimeFormatter formato_br = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final Set<Integer> processedSamples = ConcurrentHashMap.newKeySet();
 
@@ -36,13 +43,24 @@ public class KafkaAdviceConsumer {
 
         if(!record.value().getId_conselheiro().equals("1")){
             if (record.value().getFlag().equals("REQUEST_ADVICE")) {
+                Instant inicio = Instant.now();
+                LocalDateTime horaInicio = LocalDateTime.ofInstant(inicio, ZoneId.systemDefault());
+                System.out.println("[IDS 1] Hora de chegada do Request: " + horaInicio.format(formato_br));
+
                 int id_sample = record.value().getId_sample();
 
                 if(!processedSamples.contains(id_sample)) {
                     processedSamples.add(id_sample);
                     try{
-                        Thread.sleep(15000);
                         adviceService.generatesAdvice(record.value());
+
+                        Instant fim = Instant.now();
+                        LocalDateTime horaFim = LocalDateTime.ofInstant(fim, ZoneId.systemDefault());
+                        System.out.println("\n[IDS 1] Hora de envio do conselho: " + horaFim.format(formato_br));
+
+                        // Calcula a diferença de tempo em segundos
+                        Duration duracao = Duration.between(inicio, fim);
+                        System.out.println("[IDS 1] Tempo de processamento: " + duracao.getSeconds() + " segundos");
                     }catch(Exception ex){
                         throw ex;
                     }

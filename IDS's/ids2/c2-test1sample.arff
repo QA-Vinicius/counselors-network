@@ -1,0 +1,55 @@
+@relation compiledtraffic
+@attribute Time numeric
+@attribute isbA numeric
+@attribute isbB numeric
+@attribute isbC numeric
+@attribute vsbA numeric
+@attribute vsbB numeric
+@attribute vsbC numeric
+@attribute isbARmsValue numeric
+@attribute isbBRmsValue numeric
+@attribute isbCRmsValue numeric
+@attribute vsbARmsValue numeric
+@attribute vsbBRmsValue numeric
+@attribute vsbCRmsValue numeric
+@attribute isbATrapAreaSum numeric
+@attribute isbBTrapAreaSum numeric
+@attribute isbCTrapAreaSum numeric
+@attribute vsbATrapAreaSum numeric
+@attribute vsbBTrapAreaSum numeric
+@attribute vsbCTrapAreaSum numeric
+@attribute t numeric
+@attribute GooseTimestamp numeric
+@attribute SqNum numeric
+@attribute StNum numeric
+@attribute cbStatus numeric
+@attribute frameLen numeric
+@attribute ethDst {01:a0:f4:08:2f:77, FF:FF:FF:FF:FF:11, FF:FF:FF:FF:FF:22, FF:FF:FF:FF:FF:33, FF:FF:FF:FF:FF:44, FF:FF:FF:FF:FF:55, FF:FF:FF:FF:FF:66, FF:FF:FF:FF:FF:FF, FF:FF:FF:FF:FF:77, FF:FF:FF:FF:FF:AA, FF:FF:FF:FF:FF:BB, FF:FF:FF:FF:FF:CC, FF:FF:FF:FF:FF:DD, FF:FF:FF:FF:FF:EE, FF:FF:FF:FF:FF:AB, FF:FF:FF:FF:FF:AC, 01:0c:cd:01:2f:81}
+@attribute ethSrc {00:a0:f4:08:2f:77, FF:FF:FF:FF:FF:11, FF:FF:FF:FF:FF:22, FF:FF:FF:FF:FF:33, FF:FF:FF:FF:FF:44, FF:FF:FF:FF:FF:55, FF:FF:FF:FF:FF:66, FF:FF:FF:FF:FF:FF, FF:FF:FF:FF:FF:77, FF:FF:FF:FF:FF:AA, FF:FF:FF:FF:FF:BB, FF:FF:FF:FF:FF:CC, FF:FF:FF:FF:FF:DD, FF:FF:FF:FF:FF:EE, FF:FF:FF:FF:FF:AB, FF:FF:FF:FF:FF:AC, 01:0c:cd:01:2f:80}
+@attribute ethType {0x000077b7, 0x000088b8, 0x88B8}
+@attribute gooseTimeAllowedtoLive numeric
+@attribute gooseAppid {0x00003002, 0x00003001}
+@attribute gooseLen numeric
+@attribute TPID {0x7101, 0x8100}
+@attribute gocbRef {LD/LLN0$IntLockB, LD/LLN0$GO$gcbA, LD/LLN0$GO$gcblA}
+@attribute datSet {LD/LLN0$IntLockA, AA1C1Q01A1LD0/LLN0$InterlockingC}
+@attribute goID {InterlockingF, InterlockingA, IntLockA}
+@attribute test {TRUE, FALSE}
+@attribute confRev numeric
+@attribute ndsCom {TRUE, FALSE}
+@attribute numDatSetEntries numeric
+@attribute APDUSize numeric
+@attribute protocol {SV, GOOSE}
+@attribute stDiff numeric
+@attribute sqDiff numeric
+@attribute gooseLengthDiff numeric
+@attribute cbStatusDiff numeric
+@attribute apduSizeDiff numeric
+@attribute frameLengthDiff numeric
+@attribute timestampDiff numeric
+@attribute tDiff numeric
+@attribute timeFromLastChange numeric
+@attribute delay numeric
+@attribute class {normal, random_replay, inverse_replay, masquerade_fake_fault, masquerade_fake_normal, injection, high_StNum, poisoned_high_rate}
+@data
+5974.506,-0.09568015,0.33638477,0.06899428,-0.06333728,0.090919875,-0.027036548,0.0427262555524028,0.1219943889023347,0.0497587153371459,0.066416980811714,0.0659043652775484,0.0677101495441821,-38.0946151153621,-35.981454986264,-40.23744048026856,-39.44040117808618,-39.63059036595951,-39.47588274857844,5974.50631,5974.50631,1,652,1,200, 01:0c:cd:01:2f:81, 01:0c:cd:01:2f:80, 0x88B8,11000, 0x00003001,186, 0x8100, LD/LLN0$GO$gcblA, LD/LLN0$IntLockA, IntLockA, FALSE,1, FALSE,25,186, GOOSE,401,-18,0,0,0,0,0.0564567585661279,14.5,0.0,0.0004506249997575,normal

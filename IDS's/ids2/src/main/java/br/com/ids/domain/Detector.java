@@ -15,6 +15,10 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +35,8 @@ public class Detector {
     private final KafkaAdviceProducer kafkaAdviceProducer;
     private final KafkaFeedbackProducer kafkaFeedbackProducer;
     private final String detectorID = "2"; // id de cada conselheiro
+
+    public static final DateTimeFormatter formato_br = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     DataLoader dataLoader = new DataLoader();
     DataSaver dataSaver = new DataSaver();
@@ -50,10 +56,23 @@ public class Detector {
     int instanciasAdicionadas = 0; //contador de instancias adicionadas no trainDataset quando nao tem conflito
     int goodAdvices = 0;
     int badAdvices = 0;
+    int goodAdvicesTest = 0;// variaveis para avaliar bons conselhos para o dataset de teste
+    int badAdvicesTest = 0; // variaveis para avaliar bons conselhos para o dataset de teste
     String normalClass;
     boolean saveTrainInsance = true; // Ponteiro para dividir entre treino e validação
     ArrayList<Advice> historicalData = new ArrayList<>();
     String strTestAcc = "";
+
+    // Variaveis para receber as metricas de teste
+    static int testVP = 0, testVN = 0, testFP = 0, testFN = 0;
+    static double initialTestF1Score;
+    static double initialTestAccuracy;
+    static double currentTestF1Score;
+    static double currentTestAccuracy;
+    static double lastTestF1Score;  // usado apenas para comparacao do atual com o ultimo sem comprometer o inicial
+    static double lastTestAccuracy; // usado apenas para comparacao do atual com o ultimo sem comprometer o inicial
+    static double finalTestF1Score;
+    static double finalTestAccuracy;
 
     // Variaveis para receber as metricas de avaliacao
     Double currentEvaluationAverageAccuracy;
@@ -88,7 +107,9 @@ public class Detector {
     Double deltaAccuracy;
 
     // Variavel para armazenar o numero de conflitos que teve na etapa de testes antes dos conselhos
-    public int conflitosBeforeAdvices;
+    public int initialConflictsNumber;
+    public int lastConflictsNumber;
+    public int currentConflictsNumber;
 
     // Variavel que ira receber as classes abstraidas do CSV pelo metodo loadClassValues
     public static Map<Double, String> classValueMap = new HashMap<>();
@@ -218,7 +239,7 @@ public class Detector {
             if ("Evaluation Stage - Before Advice".equals(stage)) {
                 currentEvaluationAverageAccuracy = averageAccuracy;
                 currentEvaluationAverageF1Score = averageF1Score;
-                dataSaver.buildPerformanceCSV("resultsReport.csv", indexConflito, currentEvaluationAverageF1Score);
+                dataSaver.buildPerformanceCSV("evaluationResultsReport.csv", indexConflito, currentEvaluationAverageF1Score);
                 System.out.println("\n\t\t- Average Accuracy (" + stage + "): " + currentEvaluationAverageAccuracy);
                 System.out.println("\t\t- Average F1Score (" + stage + "): " + currentEvaluationAverageF1Score + "\n");
             }
@@ -226,7 +247,7 @@ public class Detector {
                 indexConflito++; //apos avaliar antes do conselho, ele insere no csv o conflito=0, entao temos que incrementar para diferenciar o f1score a cada conselho
                 newEvaluationAverageAccuracy = averageAccuracy;
                 newEvaluationAverageF1Score = averageF1Score;
-                dataSaver.buildPerformanceCSV("resultsReport.csv", indexConflito, newEvaluationAverageF1Score);
+                dataSaver.buildPerformanceCSV("evaluationResultsReport.csv", indexConflito, newEvaluationAverageF1Score);
                 System.out.println("\n\t\t- Average Accuracy (" + stage + "): " + newEvaluationAverageAccuracy);
                 System.out.println("\t\t- Average F1Score (" + stage + "): " + newEvaluationAverageF1Score + "\n");
             }
@@ -273,7 +294,7 @@ public class Detector {
         // Calculando teste
 //        int maxSizeTrain = 10000;
         int fimTrafegoNormal = -1;
-        int percentRetrofeedAlfa = 10; //num of segments
+        int percentRetrofeedAlfa = 1; //num of segments
         int percentRetrofeed = testInstances.size() / percentRetrofeedAlfa;
         int nextPoint = percentRetrofeed;
 //        System.out.println("Ten percent: " + percentRetrofeed);
@@ -294,20 +315,20 @@ public class Detector {
                 }
             }
 
-            if (nextPoint == instIndex) {
-                nextPoint = nextPoint + percentRetrofeed;
-                strTestAcc = strTestAcc + getDetectionAccuracyString() + ";";
-//                System.out.println("\n\n\n\nAcc;" + strTestAcc);// + ";" + trainInstances.size() + ";" + evaluationInstances.size());
-                if (learnWithoutAdvices) {
-                    trainClassifiers(false);
-                    evaluateClassifiersPerCluster(stage, printEvaResults, showProgress);
-                }
-
-                //Print to validate the best accuracies obtained from the cluster for each sample in it
-                //for (DetectorClusterService cluster : clusters) {
-                //    cluster.printStrEvaluation();
-                //}
-            }
+//            if (nextPoint == instIndex) {
+//                nextPoint = nextPoint + percentRetrofeed;
+//                strTestAcc = strTestAcc + getDetectionAccuracyString() + ";";
+////                System.out.println("\n\n\n\nAcc;" + strTestAcc);// + ";" + trainInstances.size() + ";" + evaluationInstances.size());
+//                if (learnWithoutAdvices) {
+//                    trainClassifiers(false);
+//                    evaluateClassifiersPerCluster(stage, printEvaResults, showProgress);
+//                }
+//
+//                //Print to validate the best accuracies obtained from the cluster for each sample in it
+//                //for (DetectorClusterService cluster : clusters) {
+//                //    cluster.printStrEvaluation();
+//                //}
+//            }
 
             Instance evaluatingPeer = testInstancesNoLabel.get(instIndex);
             double[] sample = evaluatingPeer.toDoubleArray();
@@ -360,6 +381,10 @@ public class Detector {
                 // Enviar a mensagem JSON para o tópico do Kafka usando o kafkaTemplate
                 kafkaAdviceProducer.send(conselorsDTO);
 
+                Instant inicio = Instant.now();
+                LocalDateTime horaInicio = LocalDateTime.ofInstant(inicio, ZoneId.systemDefault());
+                System.out.println("[IDS 2] Hora de envio Request: " + horaInicio.format(formato_br));
+
 //                double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress, features, adviceEnum);
 //                System.out.println("[No Classifiers] Conflito n" + conflitos + " na instância " + instIndex + ", conselho: " + adviceResult + " / correto: " + correctValue);
             } else {
@@ -392,6 +417,10 @@ public class Detector {
                             // Enviar a mensagem JSON para o tópico do Kafka usando o kafkaTemplate
                             kafkaAdviceProducer.send(conselorsDTO);
 
+                            Instant inicio = Instant.now();
+                            LocalDateTime horaInicio = LocalDateTime.ofInstant(inicio, ZoneId.systemDefault());
+                            System.out.println("[IDS 2] Hora de envio Request: " + horaInicio.format(formato_br));
+
                             break;
 //                            double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress, features, adviceEnum);
 //                            System.out.println("[Divergence Classifiers] Conflito n" + conflitos + " na instância " + instIndex + ", conselho: " + adviceResult + " / correto: " + correctValue);
@@ -403,7 +432,7 @@ public class Detector {
                         updateResults(result, correctValue, instance);
                         /* Aprende sem Conflitos*/
                         if (flagConflict == false) {
-                            System.out.println("\t\tNão houve conflito para a amostra ["+instIndex+"] | F1-Score: " + c.getEvaluationF1Score());
+                            System.out.println("\t\tNão houve conflito para a amostra ["+instIndex+"] | F1-Score: " + c.getEvaluationF1Score() + "\n");
                             if (saveTrainInsance) {
 //                                trainInstances.add(instance); // Realimenta a cada amostra testada sem conflitos
 //                                instanciasAdicionadas++;
@@ -418,6 +447,59 @@ public class Detector {
 //                            System.out.println("Aprendeu com conflito.");
 //                            }
                         }
+                    }
+                }
+            }
+        }
+
+//        System.out.println("Good Advices: " + getGoodAdvices() + "/" + conflitos);
+//        System.out.println("Os ataques começaram na amostra " + fimTrafegoNormal + "(" + (fimTrafegoNormal / testInstances.numAttributes()) + "%)");
+    }
+
+
+    public void clusterAndRetest(String stage, boolean printEvaResults, boolean showProgress) throws Exception {
+        int fimTrafegoNormal = -1;
+
+        for (int instIndex = 0; instIndex < testInstances.size(); instIndex++) {
+            flagConflict = false; // flag para identificar se teve ou nao conflito - reseta aqui para nao impactar na amostra
+
+            // System.out.println("#############");
+            // System.out.println("##  Testando - " + instIndex + "/" + testInstances.size());
+            // System.out.println("#############");
+            /* Instância Atual */
+            Instance instance = testInstances.get(instIndex);
+            double correctValue = instance.classValue();
+
+            if (!instance.stringValue(instance.attribute(instance.classIndex())).equals(normalClass)) {
+                if (fimTrafegoNormal == -1) {
+                    fimTrafegoNormal = instIndex;
+                }
+            }
+
+            Instance evaluatingPeer = testInstancesNoLabel.get(instIndex);
+            double[] sample = evaluatingPeer.toDoubleArray();
+            int clusterNum = kmeans.clusterInstance(evaluatingPeer);
+            ArrayList<DetectorClassifier> selectedClassifiers = clusters[clusterNum].getSelectedClassifiers();
+            int qtdClassificadores = selectedClassifiers.size();
+            double classifiersOutput[][] = new double[qtdClassificadores][testInstances.size()];
+
+            if(qtdClassificadores == 0) {
+                increasesConflicts();
+            } else {
+                for (int classifIndex = 0; classifIndex < qtdClassificadores; classifIndex++) {
+                    DetectorClassifier c = selectedClassifiers.get(classifIndex);
+
+                    double result = c.testSingle(instance);
+                    classifiersOutput[classifIndex][instIndex] = result;
+
+                    // Se nao for o primeiro classificador, mas houverem mais de um selecionado
+                    if (classifIndex > 0 && classifIndex < qtdClassificadores - 1 && selectedClassifiers.size() > 1) {
+                        // Checa conflito com o anterior
+                        if (classifiersOutput[classifIndex][instIndex] != classifiersOutput[classifIndex - 1][instIndex]) {
+                            increasesConflicts();
+                            break;
+                        }
+                        /* Se esse for o ultimo classificador da lista, é porque nao ocorreram conflitos*/
                     }
                 }
             }
@@ -457,6 +539,13 @@ public class Detector {
         setFN(0);
         setFP(0);
         resetConflicts();
+    }
+
+    public void resetTestConters() {
+        testVN = 0;
+        testVP = 0;
+        testFN = 0;
+        testFP = 0;
     }
 
     public int getCountTestInstances() {
@@ -513,6 +602,38 @@ public class Detector {
 
     public void setFN(int FN) {
         this.FN = FN;
+    }
+
+    public void setInitialTestF1Score(double initialTestF1Score) {
+        Detector.initialTestF1Score = initialTestF1Score;
+    }
+
+    public void setInitialTestAccuracy(double initialTestAccuracy) {
+        Detector.initialTestAccuracy = initialTestAccuracy;
+    }
+
+    public void setCurrentTestF1Score(double currentTestF1Score) {
+        Detector.currentTestF1Score = currentTestF1Score;
+    }
+
+    public void setCurrentTestAccuracy(double currentTestAccuracy) {
+        Detector.currentTestAccuracy = currentTestAccuracy;
+    }
+
+    public void setLastTestF1Score(double lastTestF1Score) {
+        Detector.lastTestF1Score = lastTestF1Score;
+    }
+
+    public void setLastTestAccuracy(double lastTestAccuracy) {
+        Detector.lastTestAccuracy = lastTestAccuracy;
+    }
+
+    public void setFinalTestF1Score(double finalTestF1Score) {
+        Detector.finalTestF1Score = finalTestF1Score;
+    }
+
+    public void setFinalTestAccuracy(double finalTestAccuracy) {
+        Detector.finalTestAccuracy = finalTestAccuracy;
     }
 
     public Double getSumAverageAccuracyInitialTest() {
@@ -582,6 +703,29 @@ public class Detector {
         try {
             double recall = (float) ((getVP() * 100) / (getVP() + getFN()));
             double precision = (float) ((getVP() * 100) / (getVP() + getFP()));
+            return (float) (2 * (recall * precision) / (recall + precision));
+        } catch (ArithmeticException e) {
+//            System.out.println(e.getLocalizedMessage());
+        }
+        return -1;
+    }
+
+    public double getTestAccuracy() {
+        try {
+            return Float.valueOf(
+                    Float.valueOf((testVP + testVN) * 100)
+                            / Float.valueOf(testVP + testVN + testFP + testFN));
+        } catch (ArithmeticException e) {
+//            System.out.println(e.getLocalizedMessage());
+        }
+        return -1;
+    }
+
+    public double getTestF1Score() {
+        try {
+            System.out.println("\tDEBUG --> VP: " + testVP + " | FN: " + testFN + " | FP: " + testFP);
+            double recall = (float) ((testVP * 100) / (testVP + testFN));
+            double precision = (float) ((testVP * 100) / (testVP + testFP));
             return (float) (2 * (recall * precision) / (recall + precision));
         } catch (ArithmeticException e) {
 //            System.out.println(e.getLocalizedMessage());
@@ -849,21 +993,67 @@ public class Detector {
         return feedback;
     }
 
-    public void compareTestMetrics() {
-        System.out.println("\t1- CONFLICTS: ");
-        System.out.println("\tInitial: " + conflitosBeforeAdvices + " | Final: " + getConflitos());
-        int deltaConflicts = conflitosBeforeAdvices - getConflitos();
-        System.out.println("\t-> Reduction of " + deltaConflicts + " conflicts after learning from advice!");
+    public void compareTestMetrics(boolean finalTest) {
+        if(finalTest){
+            System.out.println("\t1- CONFLICTS: ");
+            System.out.println("\tInitial: " + initialConflictsNumber + " | Final: " + getConflitos());
+            int deltaConflicts = initialConflictsNumber - getConflitos();
+            System.out.println("\t-> Reduction of " + deltaConflicts + " conflicts after learning from advice!");
 
-        System.out.println("\n\t2- F1-SCORE:");
-        System.out.println("\tInitial: " + totalAverageF1ScoreInitialTest + " | Final: " + totalAverageF1ScoreFinalTest);
-        double deltaTestF1Score = totalAverageF1ScoreFinalTest-totalAverageF1ScoreInitialTest;
-        System.out.println("\t-> Delta Test F1-Score: " + deltaTestF1Score);
+            System.out.println("\n\t2- F1-SCORE:");
+            System.out.println("\tInitial: " + initialTestF1Score + " | Final: " + finalTestF1Score);
+            double deltaTestF1Score = finalTestF1Score-initialTestF1Score;
+            System.out.println("\t-> Delta Test F1-Score: " + deltaTestF1Score);
 
-        System.out.println("\n\t3- ACCURACY:");
-        System.out.println("\tInitial: " + totalAverageAccuracyInitialTest + " | Final: " + totalAverageAccuracyFinalTest);
-        double deltaTestAccuracy = totalAverageAccuracyFinalTest-totalAverageAccuracyInitialTest;
-        System.out.println("\t-> Delta Test Accuracy: " + deltaTestAccuracy);
-        System.out.println("------------------------------------------------------------------------\n\n");
+            System.out.println("\n\t3- ACCURACY:");
+            System.out.println("\tInitial: " + initialTestAccuracy + " | Final: " + finalTestAccuracy);
+            double deltaTestAccuracy = finalTestAccuracy-initialTestAccuracy;
+            System.out.println("\t-> Delta Test Accuracy: " + deltaTestAccuracy);
+            System.out.println("------------------------------------------------------------------------\n\n");
+        }
+        else {
+            System.out.println("\t1- CONFLICTS: ");
+            System.out.println("\tInitial: " + initialConflictsNumber + " | Last: " + lastConflictsNumber + " | Current: " + currentConflictsNumber);
+            int deltaCurrentConflicts = lastConflictsNumber - currentConflictsNumber;
+            int deltaTotalConflicts = initialConflictsNumber - currentConflictsNumber;
+            System.out.println("\t-> Reduction of " + deltaCurrentConflicts + " conflicts after learning from advice! (Reduction Total: " + deltaTotalConflicts + ")");
+
+            System.out.println("\n\t2- F1-SCORE:");
+            System.out.println("\tInitial: " + initialTestF1Score + " | Last: " + lastTestF1Score + " | Current: " + currentTestF1Score);
+            double deltaCurrentF1Score = currentTestF1Score-lastTestF1Score;
+            double deltaTotalF1Score = currentTestF1Score-initialTestF1Score;
+            System.out.println("\t-> Delta F1-Score: " + deltaCurrentF1Score + " | Delta Total F1-Score: " + deltaTotalF1Score);
+
+            System.out.println("\n\t3- ACCURACY:");
+            System.out.println("\tInitial: " + initialTestAccuracy + " | Last: " + lastTestAccuracy + " | Current: " + currentTestAccuracy);
+            double deltaCurrentAccuracy = currentTestAccuracy-lastTestAccuracy;
+            double deltaTotalAccuracy = currentTestAccuracy-initialTestAccuracy;
+            System.out.println("\t-> Delta Accuracy: " + deltaCurrentAccuracy + " | Delta Total Accuracy: " + deltaTotalAccuracy);
+
+            lastConflictsNumber = currentConflictsNumber;
+            lastTestF1Score = currentTestF1Score;
+            lastTestAccuracy = currentTestAccuracy;
+
+            if(deltaCurrentF1Score >= 0.0) {
+                goodAdvicesTest++;
+            } else {
+                badAdvicesTest++;
+            }
+
+            System.out.println("\n\t- Good Advices (based on Testing Stage): " + goodAdvicesTest + "/" + initialConflictsNumber);
+            System.out.println("\t- Bad Advices (based on Testing Stage): " + badAdvicesTest + "/" + initialConflictsNumber);
+            System.out.println("\t-----------------------------------------------------------------------------------\n\n");
+        }
+
+//        System.out.println("\n\t2- F1-SCORE:");
+//        System.out.println("\tInitial: " + totalAverageF1ScoreInitialTest + " | Final: " + totalAverageF1ScoreFinalTest);
+//        double deltaTestF1Score = totalAverageF1ScoreFinalTest-totalAverageF1ScoreInitialTest;
+//        System.out.println("\t-> Delta Test F1-Score: " + deltaTestF1Score);
+//
+//        System.out.println("\n\t3- ACCURACY:");
+//        System.out.println("\tInitial: " + totalAverageAccuracyInitialTest + " | Final: " + totalAverageAccuracyFinalTest);
+//        double deltaTestAccuracy = totalAverageAccuracyFinalTest-totalAverageAccuracyInitialTest;
+//        System.out.println("\t-> Delta Test Accuracy: " + deltaTestAccuracy);
+//        System.out.println("------------------------------------------------------------------------\n\n");
     }
 }

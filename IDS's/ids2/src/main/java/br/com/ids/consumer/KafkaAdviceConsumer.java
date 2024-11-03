@@ -11,8 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static br.com.ids.service.ConflictService.consumerStoppingCriterion;
-import static br.com.ids.service.ConflictService.getConflitos;
 
 @Component
 @Slf4j
@@ -26,54 +28,64 @@ public class KafkaAdviceConsumer {
 
     // Variaveis para determinar o criterio de parada do consumer para o RESPONSE_ADVICE
     private int responseAdviceCount = 0;
-    private int numConflicts; // Ira receber o numero de conflitos que tiveram. sabemos que para cada conflito teremos 2 conselhos (RESPONSE_ADVICE)
+
+    // Variavel para contabilizar as amostras ja processadas
+    private final Set<Integer> processedSamples = ConcurrentHashMap.newKeySet();
 
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
     @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup2", containerFactory = "jsonKafkaListenerContainer")
     public void consumer(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
-//        numConflicts = detector.getConflitos();
-        logg.info("Received Message from Partition: " + record.partition() + ", Offset: " + record.offset());
-//        logg.info("Validando numero de conflitos: " + numConflicts);
-        final var time = System.currentTimeMillis();
+        try {
+            logg.info("Received Message from Partition: " + record.partition() + ", Offset: " + record.offset());
 
-        System.out.println("\n\t---------------------- NEW MESSAGE ----------------------");
-        System.out.println("\tBy: Counselor " + record.value().getId_conselheiro());
-        System.out.println("\tMessage Type: " + record.value().getFlag());
-        System.out.println("\tID Sample: " + record.value().getId_sample());
+            System.out.println("\n\t---------------------- NEW MESSAGE ----------------------");
+            System.out.println("\tBy: Counselor " + record.value().getId_conselheiro());
+            System.out.println("\tMessage Type: " + record.value().getFlag());
+            System.out.println("\tID Sample: " + record.value().getId_sample());
 
-        if(!record.value().getId_conselheiro().equals("2")){
-            if (record.value().getFlag().equals("REQUEST_ADVICE")) {
-                try{
-                    adviceService.generatesAdvice(record.value());
-                }catch(Exception ex){
-                    throw ex;
-                }
-            }
-            if (record.value().getFlag().equals("RESPONSE_ADVICE")) {
-                try{
-                    responseCache.storeAdvice(record.value());
-
-                    if(responseCache.stoppingCriterion(record.value().getId_sample())) {
-                        ConselorsDTO bestAdvice = responseCache.getBestAdvice(record.value().getId_sample());
-                        adviceService.learnWithAdvice(bestAdvice);
+            if(!record.value().getId_conselheiro().equals("2")){
+                if (record.value().getFlag().equals("REQUEST_ADVICE")) {
+                    try{
+                        adviceService.generatesAdvice(record.value());
+                    }catch(Exception ex){
+                        throw ex;
                     }
-
-                    responseAdviceCount++;
-                    if(responseAdviceCount >= consumerStoppingCriterion()) {
-                        logg.info("Received all possible RESPONSE_ADVICE messages, stopping consumer!");
-
-                        // Avaliar como ficou o detector apos os aprendizados com conselhos
-                        adviceService.analyzeFinalPerformance(record.value());
-                        return;
-                    }
-                }catch(Exception ex){
-                    throw ex;
                 }
+                if (record.value().getFlag().equals("RESPONSE_ADVICE")) {
+                    int id_sample = record.value().getId_sample();
+
+                    if(!processedSamples.contains(id_sample)) {
+                        try {
+                            responseCache.storeAdvice(record.value());
+
+                            if (responseCache.stoppingCriterion(record.value().getId_sample())) {
+                                ConselorsDTO bestAdvice = responseCache.getBestAdvice(record.value().getId_sample());
+                                adviceService.learnWithAdvice(bestAdvice);
+                                processedSamples.add(id_sample);
+                            }
+
+                            responseAdviceCount++;
+                            if (responseAdviceCount >= consumerStoppingCriterion()) {
+                                logg.info("Received all possible RESPONSE_ADVICE messages, stopping consumer!");
+
+                                // Avaliar como ficou o detector apos os aprendizados com conselhos
+                                adviceService.analyzeFinalPerformance(record.value());
+                                return;
+                            }
+                        } catch (Exception ex) {
+                            throw ex;
+                        }
+                    } else {
+                        System.out.println("\tThe advice for this sample (" + id_sample + ") has already been processed!");
+                    }
+                }
+            } else {
+                System.out.println("\tAction: Ignore own message!");
             }
-        } else {
-            System.out.println("\tAction: Ignore own message!");
+            System.out.println("\t---------------------------------------------------------\n");
+        } catch (Exception e) {
+            logg.error("Error processing message ", e);
         }
-        System.out.println("\t---------------------------------------------------------\n");
     }
 }

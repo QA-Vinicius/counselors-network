@@ -1,5 +1,6 @@
 package br.com.ids.scheduling;
 
+import br.com.ids.consumer.KafkaAdviceConsumer;
 import br.com.ids.data.DataSaver;
 import br.com.ids.domain.Detector;
 import br.com.ids.dto.ConselorsDTO;
@@ -56,7 +57,7 @@ public class JobScheduler {
          * */
         Instances trainInstances = dataLoader.leadAndFilter(false, "c2-train.arff", oneR_Detector2);
         Instances evaluationInstances = dataLoader.leadAndFilter(false, "c2-eval.arff", oneR_Detector2);
-        Instances testInstances = dataLoader.leadAndFilter(false, "c2-test.arff", oneR_Detector2);
+        Instances testInstances = dataLoader.leadAndFilter(false, "c2-test1sample.arff", oneR_Detector2);
 
         detector = new Detector(kafkaAdviceProducer, kafkaFeedbackProducer, trainInstances, evaluationInstances, testInstances, NORMAL_CLASS);
 
@@ -73,7 +74,8 @@ public class JobScheduler {
         detector.resetConters();
 
         // Cria o arquivo previamente que sera populado com os f1scores apos o aprendizado com cada conselho
-        dataSaver.createPerformanceCSV("resultsReport.csv");
+        dataSaver.createEvaluationPerformanceCSV("evaluationResultsReport.csv");
+        dataSaver.createTestPerformanceCSV("testResultsReport.csv");
 
         // Treina seus classificadores com o dataset de treino
         detector = detectorProcessor.trainingStage(detector, false);
