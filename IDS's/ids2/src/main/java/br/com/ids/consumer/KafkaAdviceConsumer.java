@@ -3,6 +3,7 @@ package br.com.ids.consumer;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.service.AdviceResponseCache;
 import br.com.ids.service.AdviceService;
+import br.com.ids.service.SampleProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -13,6 +14,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static br.com.ids.service.ConflictService.consumerStoppingCriterion;
 
@@ -25,6 +29,9 @@ public class KafkaAdviceConsumer {
 
     @Autowired
     private AdviceResponseCache responseCache;
+
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor(); // apenas uma thread para evitar sobrecarga
+    private final LinkedBlockingQueue<ConselorsDTO> adviceQueue = new LinkedBlockingQueue<>();
 
     // Variaveis para determinar o criterio de parada do consumer para o RESPONSE_ADVICE
     private int responseAdviceCount = 0;
@@ -61,8 +68,8 @@ public class KafkaAdviceConsumer {
 
                             if (responseCache.stoppingCriterion(record.value().getId_sample())) {
                                 ConselorsDTO bestAdvice = responseCache.getBestAdvice(record.value().getId_sample());
-                                adviceService.learnWithAdvice(bestAdvice);
                                 processedSamples.add(id_sample);
+//                                adviceService.learnWithAdvice(bestAdvice);
                             }
 
                             responseAdviceCount++;
@@ -86,6 +93,23 @@ public class KafkaAdviceConsumer {
             System.out.println("\t---------------------------------------------------------\n");
         } catch (Exception e) {
             logg.error("Error processing message ", e);
+        }
+    }
+
+    private void asyncLearning(ConselorsDTO advice) {
+        adviceQueue.offer(advice);
+        if (!executorService.isShutdown()) {
+            executorService.submit(() -> {
+                while (!adviceQueue.isEmpty()) {
+                    ConselorsDTO adviceToLearn = adviceQueue.poll();
+                    // Implementação do treinamento em thread separada
+                    try {
+                        adviceService.retrainWithAdvice(adviceToLearn);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
         }
     }
 }

@@ -131,6 +131,10 @@ public class Detector {
         this.kafkaFeedbackProducer = kafkaFeedbackProducer;
     }
 
+    public synchronized void updateModel() {
+        // Atualiza o modelo de classificação após treinamento
+    }
+
     public void createClusters(int k, int seed) throws Exception {
         clusters = new DetectorClusterService[k];
         kmeans = new SimpleKMeans();

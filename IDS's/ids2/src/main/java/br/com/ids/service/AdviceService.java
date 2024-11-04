@@ -19,6 +19,10 @@ public class AdviceService {
         jobScheduler.learnWithAdvice(conselorsDTO);
     }
 
+    public void retrainWithAdvice(ConselorsDTO conselorsDTO) throws Exception {
+        jobScheduler.learnWithAdvice(conselorsDTO);
+    }
+
     public void analyzeFinalPerformance(ConselorsDTO conselorsDTO) throws Exception {
         jobScheduler.analyzeFinalPerformance(conselorsDTO);
     }

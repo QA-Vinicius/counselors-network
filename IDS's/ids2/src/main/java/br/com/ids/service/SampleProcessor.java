@@ -101,6 +101,20 @@ public class SampleProcessor {
 //        }
     }
 
+    public void retrainWithAdvice(ConselorsDTO conselorsDTO, Detector detector) {
+        new Thread(() -> {
+            try {
+                learnWithAdvice(conselorsDTO, detector);
+                // Após a conclusão, atualiza o modelo e processa a fila de espera.
+                synchronized (detector) {
+                    detector.updateModel(); // Método fictício para simular atualização do modelo.
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     public void analyzeFinalPerformance(ConselorsDTO conselorsDTO, Detector detector) throws Exception {
         System.out.println("\n\n------------------------------------------------------------------------");
         System.out.println("\n\n-- Analyzing the final performance of the detector");
