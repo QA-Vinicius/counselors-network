@@ -19,7 +19,49 @@ public class DataSaver {
     // Metodo para criar o arquivo CSV no qual os dados de monitoramento do f1score na etapa de teste vao ser armazenados
     public void createTestPerformanceCSV(String filename) throws IOException {
         FileWriter fileWriter = new FileWriter(filename);
-        fileWriter.append("Id_Advice,Id_Sample,F1-Score,Accuracy,Number_Conflicts\n");
+        fileWriter.append("Stage,F1-Score,Accuracy,Number_Conflicts\n");
+        fileWriter.flush();
+        fileWriter.close();
+    }
+
+    public void createCalculatedTestMetrics(String filename) throws IOException {
+        FileWriter fileWriter = new FileWriter(filename);
+        fileWriter.append("Id_Sample,ClassifiersResult,TrueResult,Metric\n");
+        fileWriter.flush();
+        fileWriter.close();
+    }
+
+    public void createCalculatedRetestMetrics(String filename) throws IOException {
+        FileWriter fileWriter = new FileWriter(filename);
+        fileWriter.append("Id_Sample,ClassifiersResult,TrueResult,Metric\n");
+        fileWriter.flush();
+        fileWriter.close();
+    }
+
+    public void createCalculatedAdviceMetrics(String filename) throws IOException {
+        FileWriter fileWriter = new FileWriter(filename);
+        fileWriter.append("Id_Sample,AdviceResult,TrueResult,Metric,SendedBy\n");
+        fileWriter.flush();
+        fileWriter.close();
+    }
+
+    public void buildTestMetricsCSV(String file, int id_sample, double classifiersResult, double trueResult, String metric) throws IOException {
+        FileWriter fileWriter = new FileWriter(file, true);
+        fileWriter.append(id_sample + "," + classifiersResult + "," + trueResult + "," + metric + "\n");
+        fileWriter.flush();
+        fileWriter.close();
+    }
+
+    public void buildRetestMetricsCSV(String file, int id_sample, double classifiersResult, double trueResult, String metric) throws IOException {
+        FileWriter fileWriter = new FileWriter(file, true);
+        fileWriter.append(id_sample + "," + classifiersResult + "," + trueResult + "," + metric + "\n");
+        fileWriter.flush();
+        fileWriter.close();
+    }
+
+    public void buildAdvicesMetricsCSV(String file, int id_sample, double adviceResult, double trueResult, String metric, String ids) throws IOException {
+        FileWriter fileWriter = new FileWriter(file, true);
+        fileWriter.append(id_sample + "," + adviceResult + "," + trueResult + "," + metric + "," + ("IDS " + ids) + "\n");
         fileWriter.flush();
         fileWriter.close();
     }

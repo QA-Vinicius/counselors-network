@@ -31,6 +31,9 @@ public class KafkaAdviceConsumer {
 
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
+    // Variavel para garantir que o primeiro conselho sera enviado a tempo do IDS 2 iniciar o consumer
+    private boolean firstAdvice = true;
+
     @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup", containerFactory = "jsonKafkaListenerContainer")
     public void consumer(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
         logg.info("Received Message from Partition: " + record.partition() + ", Offset: " + record.offset());
@@ -45,7 +48,12 @@ public class KafkaAdviceConsumer {
             if (record.value().getFlag().equals("REQUEST_ADVICE")) {
                 Instant inicio = Instant.now();
                 LocalDateTime horaInicio = LocalDateTime.ofInstant(inicio, ZoneId.systemDefault());
-                System.out.println("[IDS 1] Hora de chegada do Request: " + horaInicio.format(formato_br));
+//                System.out.println("[IDS 1] Hora de chegada do Request: " + horaInicio.format(formato_br));
+
+                if(firstAdvice) {
+                    Thread.sleep(50000);
+                    firstAdvice = false;
+                }
 
                 int id_sample = record.value().getId_sample();
 
@@ -56,11 +64,11 @@ public class KafkaAdviceConsumer {
 
                         Instant fim = Instant.now();
                         LocalDateTime horaFim = LocalDateTime.ofInstant(fim, ZoneId.systemDefault());
-                        System.out.println("\n[IDS 1] Hora de envio do conselho: " + horaFim.format(formato_br));
+//                        System.out.println("\n[IDS 1] Hora de envio do conselho: " + horaFim.format(formato_br));
 
                         // Calcula a diferença de tempo em segundos
                         Duration duracao = Duration.between(inicio, fim);
-                        System.out.println("[IDS 1] Tempo de processamento: " + duracao.getSeconds() + " segundos");
+//                        System.out.println("[IDS 1] Tempo de processamento: " + duracao.getSeconds() + " segundos");
                     }catch(Exception ex){
                         throw ex;
                     }

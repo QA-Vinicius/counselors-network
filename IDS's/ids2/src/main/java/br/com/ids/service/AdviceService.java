@@ -19,7 +19,15 @@ public class AdviceService {
         jobScheduler.learnWithAdvice(conselorsDTO);
     }
 
-    public void analyzeFinalPerformance(ConselorsDTO conselorsDTO) throws Exception {
-        jobScheduler.analyzeFinalPerformance(conselorsDTO);
+    public void addSampleAndCalculateMetrics(ConselorsDTO conselorsDTO) throws Exception {
+        jobScheduler.processAdvice(conselorsDTO);
+    }
+
+    public void analyzeAdviceResult(ConselorsDTO conselorsDTO) throws Exception {
+        jobScheduler.learnWithAdvice(conselorsDTO);
+    }
+
+    public void analyzeFinalPerformance() throws Exception {
+        jobScheduler.analyzeFinalPerformance();
     }
 }

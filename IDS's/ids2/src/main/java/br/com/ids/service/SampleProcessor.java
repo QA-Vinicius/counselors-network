@@ -1,13 +1,16 @@
 package br.com.ids.service;
 
+import br.com.ids.domain.Advice;
 import br.com.ids.domain.Detector;
 import br.com.ids.dto.ConselorsDTO;
+import br.com.ids.metrics.TimeLogger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -15,7 +18,7 @@ import java.util.Arrays;
 
 import static br.com.ids.domain.Detector.classValueMap;
 import static br.com.ids.domain.Detector.formato_br;
-import static br.com.ids.service.ConflictService.getConflitos;
+import static br.com.ids.util.ConflictManager.getConflitos;
 
 @Component
 public class SampleProcessor {
@@ -101,22 +104,51 @@ public class SampleProcessor {
 //        }
     }
 
-    public void analyzeFinalPerformance(ConselorsDTO conselorsDTO, Detector detector) throws Exception {
-        System.out.println("\n\n------------------------------------------------------------------------");
-        System.out.println("\n\n-- Analyzing the final performance of the detector");
-        System.out.println("\n\n------------------------------------------------------------------------");
+    public void addSampleAndCalculateMetrics(ConselorsDTO advice, Detector detector) throws IOException {
+        System.out.println("\tAction: Process Advice and Calculate Metrics");
+        System.out.println("\tSended by: Counselor " + advice.getId_conselheiro());
 
-        System.out.println("-- Retraining the classifiers with new instances");
+        Instances trainInstances = detector.getTrainInstances();
+        if (trainInstances.classIndex() == -1) {
+            trainInstances.setClassIndex(trainInstances.numAttributes() - 1);
+        }
+
+        System.out.println("\t| - Extracting the received sample and label");
+        double[] sample = advice.getSample();
+        double sampleLabel = advice.getResult();
+        System.out.println("\t\t- Label: " + sampleLabel + " ("+ classValueMap.get(sampleLabel) + ")");
+
+        double[] values = Arrays.copyOf(sample, sample.length + 1); // Adiciona espaço para o atributo de classe
+        values[values.length - 1] = sampleLabel; // Valor inicial para o atributo de classe
+
+        System.out.println("\t| - Creating new instance with labeled sample (Train Instances)");
+        Instance newTrainInstance = new DenseInstance(1.0, values);
+        newTrainInstance.setDataset(trainInstances);
+
+        System.out.println("\t| - Adding instance to trainInstances");
+        trainInstances.add(newTrainInstance);
+
+        System.out.println("\t| - Calculating metrics with this sample");
+        String metricResult = Advice.calculateAdviceMetrics(advice);
+        System.out.println("\t\t- Metric Result: " + metricResult);
+    }
+
+    public void analyzeFinalPerformance(Detector detector) throws Exception {
+        System.out.println("\n\n------------------------------------------------------------------------");
+        System.out.println("-- Analyzing the final performance of the detector");
+        System.out.println("------------------------------------------------------------------------");
+
+
+        System.out.println("-- Retraining the classifiers with all new instances");
+        TimeLogger.start("Final Training Stage");
         detector = detectorProcessor.trainingStage(detector, false);
+        TimeLogger.stop("Final Training Stage");
 
         System.out.println("-- Reevaluating the classifiers");
         detector = detectorProcessor.evaluationStage("Evaluation Stage - Final", detector, false, true);
 
-        // Zera todas as variaveis para avaliação
-        detector.resetConters();
-
         System.out.println("-- Retesting to validate final performance");
-        detector = detectorProcessor.testStage("Testing Stage - Final",  detector, true, false, true, noFeatureSelection);
+        detector = detectorProcessor.retestStage(detector);
 
         System.out.println("-- Comparing Test Stage metrics");
         detector.compareTestMetrics(true);

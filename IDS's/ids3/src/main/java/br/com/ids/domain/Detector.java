@@ -527,64 +527,30 @@ public class Detector {
         //System.out.println("\n-- DEBUG PARA COMPARAR NUMERO DE ATRIBUTOS");
         //System.out.println("\t- Tamanho da amostra: " + sample.length);
 
-        Instant inicio = Instant.now();
-        LocalDateTime horaInicio = LocalDateTime.ofInstant(inicio, ZoneId.systemDefault());
-        System.out.println("[IDS 3] INIT Creating new instance with the received sample: " + horaInicio.format(formato_br));
         System.out.println("\t1- Creating new instance with the received sample");
         Instance newInstance = new DenseInstance(1.0, sample);
-        Instant fim = Instant.now();
-        LocalDateTime horafim = LocalDateTime.ofInstant(fim, ZoneId.systemDefault());
-        System.out.println("[IDS 3] END Creating new instance with the received sample: " + horafim.format(formato_br));
-
         //System.out.println("\t- KMEANS:: " + kmeans.getClusterCentroids().get(0).numAttributes());
         //System.out.println("\t- newInstance:: " + newInstance.numAttributes());
 
 
-        Instant inicio1 = Instant.now();
-        LocalDateTime horaInicio1 = LocalDateTime.ofInstant(inicio1, ZoneId.systemDefault());
-        System.out.println("[IDS 3] INIT Identifying the corresponding cluster for this sample: " + horaInicio1.format(formato_br));
         System.out.println("\t2- Identifying the corresponding cluster for this sample");
         int clusterNum = kmeans.clusterInstance(newInstance);
         DetectorClusterService cluster = clusters[clusterNum];
-        Instant fim1 = Instant.now();
-        LocalDateTime horafim1 = LocalDateTime.ofInstant(fim1, ZoneId.systemDefault());
-        System.out.println("[IDS 3] END Identifying the corresponding cluster for this sample: " + horafim1.format(formato_br));
 
 
-        Instant inicio2 = Instant.now();
-        LocalDateTime horaInicio2 = LocalDateTime.ofInstant(inicio2, ZoneId.systemDefault());
-        System.out.println("[IDS 3] INIT Getting the selected classifiers from this cluster: " + horaInicio2.format(formato_br));
         System.out.println("\t3- Getting the selected classifiers from this cluster");
         ArrayList<DetectorClassifier> selectedClassifiers = cluster.getSelectedClassifiers();
-        Instant fim2 = Instant.now();
-        LocalDateTime horafim2 = LocalDateTime.ofInstant(fim2, ZoneId.systemDefault());
-        System.out.println("[IDS 3] END Getting the selected classifiers from this cluster: " + horafim2.format(formato_br));
 
-        Instant inicio3 = Instant.now();
-        LocalDateTime horaInicio3 = LocalDateTime.ofInstant(inicio3, ZoneId.systemDefault());
-        System.out.println("[IDS 3] INIT Associating the instance with the evaluation dataset: " + horaInicio3.format(formato_br));
         System.out.println("\t4- Associating the instance with the evaluation dataset");
         newInstance.setDataset(evaluationInstances); // Associa a instância ao dataset
-        Instant fim3 = Instant.now();
-        LocalDateTime horafim3 = LocalDateTime.ofInstant(fim3, ZoneId.systemDefault());
-        System.out.println("[IDS 3] END Associating the instance with the evaluation dataset: " + horafim3.format(formato_br));
 
         double bestResult = Double.NaN;
         double bestF1Score = -1;
         String predictedClassName = "";
 
-        Instant inicio4 = Instant.now();
-        LocalDateTime horaInicio4 = LocalDateTime.ofInstant(inicio4, ZoneId.systemDefault());
-        System.out.println("[IDS 3] INIT Getting better classification result: " + horaInicio4.format(formato_br));
         System.out.println("\t5- Getting better classification result");
         for (DetectorClassifier classifier : selectedClassifiers) {
-            Instant inicio5 = Instant.now();
-            LocalDateTime horaInicio5 = LocalDateTime.ofInstant(inicio5, ZoneId.systemDefault());
-            System.out.println("\tINIT ClassifyInstance: " + horaInicio5.format(formato_br));
             double result = classifier.classifyInstance(newInstance);
-            Instant fim5 = Instant.now();
-            LocalDateTime horafim5 = LocalDateTime.ofInstant(fim5, ZoneId.systemDefault());
-            System.out.println("\tINIT ClassifyInstance: " + horafim5.format(formato_br));
             //System.out.println("ACOMPANHA F1SCORE: " + classifier.getEvaluationF1Score());
             if (classifier.getEvaluationF1Score() > bestF1Score) {
                 bestF1Score = classifier.getEvaluationF1Score();
@@ -592,17 +558,11 @@ public class Detector {
                 predictedClassName = classValueMap.get(bestResult);
             }
         }
-        Instant fim4 = Instant.now();
-        LocalDateTime horafim4 = LocalDateTime.ofInstant(fim4, ZoneId.systemDefault());
-        System.out.println("[IDS 3] END Getting better classification result: " + horafim4.format(formato_br));
 
         System.out.println("\t\t|Best F1Score: " + bestF1Score);
         System.out.println("\t\t|Best Result: " + bestResult);
         System.out.println("\t\t|Class Name: " + predictedClassName);
 
-        Instant inicio6 = Instant.now();
-        LocalDateTime horaInicio6 = LocalDateTime.ofInstant(inicio6, ZoneId.systemDefault());
-        System.out.println("[IDS 3] INIT Sending Advice: " + horaInicio6.format(formato_br));
         System.out.println("\t6- Sending Advice");
         ConselorsDTO conselorsDTO = ConselorsDTO.builder()
                 .id_conselheiro(detectorID)
@@ -616,8 +576,5 @@ public class Detector {
                 .build();
 
         kafkaAdviceProducer.send(conselorsDTO);
-        Instant fim6 = Instant.now();
-        LocalDateTime horafim6 = LocalDateTime.ofInstant(fim6, ZoneId.systemDefault());
-        System.out.println("[IDS 3] END Sending Advice: " + horafim6.format(formato_br));
     }
 }
