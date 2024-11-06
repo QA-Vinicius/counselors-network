@@ -14,14 +14,9 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import static br.com.ids.consumer.KafkaAdviceConsumer.formato_br;
 
 /**
  * @author vinicius
@@ -70,6 +65,10 @@ public class Detector {
         this.normalClass = normalClass;
         this.kafkaAdviceProducer = kafkaAdviceProducer;
         this.kafkaFeedbackProducer = kafkaFeedbackProducer;
+
+//        System.out.println("[IDS 3] TrainInstances size: " + trainInstances.size());
+//        System.out.println("[IDS 3] EvaluationInstances size: " + evaluationInstances.size());
+//        System.out.println("[IDS 3] TestInstances size: " + testInstances.size());
     }
 
     public void createClusters(int k, int seed) throws Exception {

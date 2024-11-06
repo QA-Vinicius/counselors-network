@@ -116,7 +116,7 @@ public class SampleProcessor {
         System.out.println("\t| - Extracting the received sample and label");
         double[] sample = advice.getSample();
         double sampleLabel = advice.getResult();
-        System.out.println("\t\t- Label: " + sampleLabel + " ("+ classValueMap.get(sampleLabel) + ")");
+        System.out.println("\t|\t- Label: " + sampleLabel + " ("+ classValueMap.get(sampleLabel) + ")");
 
         double[] values = Arrays.copyOf(sample, sample.length + 1); // Adiciona espaço para o atributo de classe
         values[values.length - 1] = sampleLabel; // Valor inicial para o atributo de classe
@@ -130,7 +130,7 @@ public class SampleProcessor {
 
         System.out.println("\t| - Calculating metrics with this sample");
         String metricResult = Advice.calculateAdviceMetrics(advice);
-        System.out.println("\t\t- Metric Result: " + metricResult);
+        System.out.println("\t|\t- Metric Result: " + metricResult);
     }
 
     public void analyzeFinalPerformance(Detector detector) throws Exception {

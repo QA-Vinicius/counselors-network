@@ -88,7 +88,7 @@ public class KafkaAdviceConsumer {
                             }
 
                             responseAdviceCount++;
-                            System.out.println("DEBUG -> Conflitos encontrados: " + getConflitos());
+                            System.out.println("\nDEBUG -> Conflitos encontrados: " + getConflitos());
                             System.out.println("DEBUG -> Conselhos obtidos: " + responseAdviceCount + "/" + consumerStoppingCriterion());
                             if (responseAdviceCount >= consumerStoppingCriterion()) {
                                 logg.info("Received all possible RESPONSE_ADVICE messages, stopping consumer!");

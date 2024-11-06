@@ -108,13 +108,6 @@ public class Advice {
             }
         }
 
-//        if (advice.getId_sample() == 44983) {
-//            System.out.println("\t\tADVICE RESULT = " + advice.getResult());
-//            System.out.println("\t\tTRUE RESULT = " + instance.classValue());
-//            System.out.println("\t\tSTRING VALUE RESULT = " + instance.stringValue(instance.attribute(instance.classIndex())));
-//            Thread.sleep(30000);
-//        }
-
         dataSaver.buildAdvicesMetricsCSV("advicesMetrics.csv", advice.getId_sample(), advice.getResult(), instance.classValue(), metric, advice.getId_conselheiro());
 
         return metric;

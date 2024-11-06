@@ -131,6 +131,10 @@ public class Detector {
         this.normalClass = normalClass;
         this.kafkaAdviceProducer = kafkaAdviceProducer;
         this.kafkaFeedbackProducer = kafkaFeedbackProducer;
+
+        System.out.println("[IDS 2] TrainInstances size: " + trainInstances.size());
+        System.out.println("[IDS 2] EvaluationInstances size: " + evaluationInstances.size());
+        System.out.println("[IDS 2] TestInstances size: " + testInstances.size());
     }
 
     public void createClusters(int k, int seed) throws Exception {
@@ -419,22 +423,18 @@ public class Detector {
                             // Enviar a mensagem JSON para o tópico do Kafka usando o kafkaTemplate
                             kafkaAdviceProducer.send(conselorsDTO);
 
-                            Instant inicio = Instant.now();
-                            LocalDateTime horaInicio = LocalDateTime.ofInstant(inicio, ZoneId.systemDefault());
-//                            System.out.println("[IDS 2] Hora de envio Request: " + horaInicio.format(formato_br));
-
                             break;
 //                            double adviceResult = handleConflict(enableAdvice, correctValue, instIndex, instance, learnWithAdvice, evaluatingPeer, printEvaResults, showProgress, features, adviceEnum);
 //                            System.out.println("[Divergence Classifiers] Conflito n" + conflitos + " na instância " + instIndex + ", conselho: " + adviceResult + " / correto: " + correctValue);
                         }
                         /* Se esse for o ultimo classificador da lista, é porque nao ocorreram conflitos*/
-                        Advice.calculateMetrics(stage, result, instance, instIndex);
                     } else if (classifIndex == (qtdClassificadores - 1)) {
                         /* Salva um conselho para ser oferecido a outro detector */
 //                        historicalData.add(instIndex, new Advice(c.evaluationAccuracy, result, correctValue, normalClass));
                         updateResults(result, correctValue, instance);
                         /* Aprende sem Conflitos*/
                         if (flagConflict == false) {
+                            Advice.calculateMetrics(stage, result, instance, instIndex);
                             System.out.println("\t\tNão houve conflito para a amostra ["+instIndex+"] | F1-Score: " + c.getEvaluationF1Score() + "\n");
                             if (saveTrainInsance) {
 //                                trainInstances.add(instance); // Realimenta a cada amostra testada sem conflitos
@@ -501,6 +501,7 @@ public class Detector {
                             break;
                         }
                         /* Se esse for o ultimo classificador da lista, é porque nao ocorreram conflitos*/
+                    } else if (classifIndex == (qtdClassificadores - 1) && flagConflict == false) {
                         Advice.calculateMetrics("Retest", result, instance, instIndex);
                     }
                 }
@@ -987,7 +988,7 @@ public class Detector {
             System.out.println("\tInitial: " + initialConflictsNumber + " | Last: " + lastConflictsNumber + " | Current: " + currentConflictsNumber);
             int deltaCurrentConflicts = lastConflictsNumber - currentConflictsNumber;
             int deltaTotalConflicts = initialConflictsNumber - currentConflictsNumber;
-            System.out.println("\t-> Reduction of " + deltaCurrentConflicts + " conflicts after learning from advice! (Reduction Total: " + deltaTotalConflicts + ")");
+            System.out.println("\t-> Reduction of " + deltaCurrentConflicts + " conflicts after learning from all the advice! (Reduction Total: " + deltaTotalConflicts + ")");
 
             System.out.println("\n\t2- F1-SCORE:");
             System.out.println("\tInitial: " + initialTestF1Score + " | Last: " + lastTestF1Score + " | Current: " + currentTestF1Score);
@@ -1019,11 +1020,18 @@ public class Detector {
         System.out.println("\n\t4- ANALYSIS OF THE ADVICES:");
         System.out.println("\t\tIDS 1:" );
         System.out.println("\t\t\t| Chosen advices: " + KafkaAdviceConsumer.adviceCountCounselor1);
-        System.out.println("\t\t\t| Correct: " + Advice.correctAdvice.get("1") + " (" + Advice.porcentageCorrectAdvices(KafkaAdviceConsumer.adviceCountCounselor1, Advice.correctAdvice.get("1")) + "%)");
+        System.out.printf("\t\t\t| Correct: %d (%.2f%%)%n",
+                Advice.correctAdvice.get("1"),
+                Advice.porcentageCorrectAdvices(KafkaAdviceConsumer.adviceCountCounselor1, Advice.correctAdvice.get("1")));
+//        System.out.println("\t\t\t| Correct: " + Advice.correctAdvice.get("1") + " (" + Advice.porcentageCorrectAdvices(KafkaAdviceConsumer.adviceCountCounselor1, Advice.correctAdvice.get("1")) + "%)");
 
         System.out.println("\t\tIDS 3:" );
         System.out.println("\t\t\t| Chosen advices: " + KafkaAdviceConsumer.adviceCountCounselor3);
-        System.out.println("\t\t\t| Correct: " + Advice.correctAdvice.get("3") + " (" + Advice.porcentageCorrectAdvices(KafkaAdviceConsumer.adviceCountCounselor3, Advice.correctAdvice.get("3")) + "%)");
+        System.out.printf("\t\t\t| Correct: %d (%.2f%%)%n",
+                Advice.correctAdvice.get("3"),
+                Advice.porcentageCorrectAdvices(KafkaAdviceConsumer.adviceCountCounselor3, Advice.correctAdvice.get("3")));
+//        System.out.println("\t\t\t| Correct: " + Advice.correctAdvice.get("3") + " (" + Advice.porcentageCorrectAdvices(KafkaAdviceConsumer.adviceCountCounselor3, Advice.correctAdvice.get("3")) + "%)");
+
 
         System.out.println("\n\t5- TIME METRICS (DURATION):");
         System.out.println("\t\tTrain:" );
