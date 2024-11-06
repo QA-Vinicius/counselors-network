@@ -1,13 +1,16 @@
 package br.com.ids.service;
 
 import br.com.ids.data.DataSaver;
+import br.com.ids.domain.Advice;
 import br.com.ids.domain.Detector;
 import br.com.ids.domain.DetectorClassifier;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.enuns.AdviceEnum;
+import br.com.ids.metrics.TimeLogger;
 import org.springframework.stereotype.Component;
 
 import static br.com.ids.service.ConflictService.getConflitos;
+import static br.com.ids.service.ConflictService.resetConflicts;
 
 @Component
 public class DetectorProcessor {
@@ -15,8 +18,8 @@ public class DetectorProcessor {
     DataSaver dataSaver = new DataSaver();
     private int indexConselho = 0; //variavel a ser incrementada a cada metodo retestStage que sera usada como id do conselho no csv
 
+    /* Train Phase */
     public Detector trainingStage(Detector detec, boolean printTrain) throws Exception {
-        /* Train Phase */
         System.out.println("\t1- Training Stage");
         System.out.println("\t\tTraining with " + detec.trainInstances.numInstances() + " instances.");
         detec.trainClassifiers(printTrain);
@@ -27,26 +30,32 @@ public class DetectorProcessor {
         return detec;
     }
 
+    /* Evaluation Phase */
     public Detector evaluationStage(String stage, Detector detec, boolean printEvaluation, boolean showProgress) throws Exception {
-        /* Evaluation Phase */
+        TimeLogger.start(stage);
+
         System.out.println("\t2- Evaluation Stage");
         detec.evaluateClassifiersPerCluster(stage, printEvaluation, showProgress);
 
-        System.out.println("\n\tEnd of evaluation stage\n\n");
+        System.out.println("\tEnd of evaluation stage\n\n");
 //        System.out.println("------------------------------------------------------------------------");
+
+        TimeLogger.stop(stage);
 
         return detec;
     }
 
+    /* Test Phase */
     public Detector testStage(String stage, Detector detec, boolean advices, boolean printEvaluation, boolean showProgress, int[] features) throws Exception {
-        /* Evaluation Phase */
+        TimeLogger.start(stage);
+
         System.out.println("\t3- Testing Stage");
         System.out.println("\t\tTesting with " + detec.getCountTestInstances() + " instances.\n");
 
         detec.resetTestConters();
         detec.clusterAndTestSample(stage, advices, true, true, printEvaluation, showProgress, features, AdviceEnum.REQUEST_ADVICE);
 
-        System.out.println("\n\tEnd of testing stage");
+        System.out.println("\tEnd of testing stage");
 
         if(stage.equals("Testing Stage")) {
             System.out.println("\tTotal conflicts found: " + getConflitos());
@@ -69,23 +78,23 @@ public class DetectorProcessor {
 //            Zerando o contador das medias de test para proxima etapa
 //            detec.setCountTestAverages(0);
 
-            double initialTestF1Score = detec.getTestF1Score();
+            double initialTestF1Score = Advice.calculateTestF1Score();
             System.out.println("\n\tF1-Score in the initial Testing Stage: " + initialTestF1Score);
             detec.setInitialTestF1Score(initialTestF1Score);
             detec.setLastTestF1Score(initialTestF1Score);   // o last mede o estado anterior, se essa é a primeira exec então logo vai ser o ultimo estado
 
-            double initialTestAccuracy = detec.getTestAccuracy();
+            double initialTestAccuracy = Advice.calculateTestAccuracy();
             System.out.println("\n\tAccuracy in the initial Testing Stage: " + initialTestAccuracy);
             detec.setInitialTestAccuracy(initialTestAccuracy);
             detec.setLastTestAccuracy(initialTestAccuracy); // o last mede o estado anterior, se essa é a primeira exec então logo vai ser o ultimo estado
 
             dataSaver.buildPerformanceCSV("testResultsReport.csv", indexConselho, null, initialTestF1Score, initialTestAccuracy, getConflitos());
         } else if(stage.equals("Testing Stage - Final")) {
-            double finalTestF1Score = detec.getTestF1Score();
+            double finalTestF1Score = Advice.calculateTestF1Score();
             System.out.println("\n\tF1-Score in the initial Testing Stage: " + finalTestF1Score);
             detec.setFinalTestF1Score(finalTestF1Score);
 
-            double finalTestAccuracy = detec.getTestAccuracy();
+            double finalTestAccuracy = Advice.calculateTestAccuracy();
             System.out.println("\n\tAccuracy in the initial Testing Stage: " + finalTestAccuracy);
             detec.setFinalTestAccuracy(finalTestAccuracy);
 
@@ -105,22 +114,30 @@ public class DetectorProcessor {
 
     public Detector retestStage(String stage, Detector detec, ConselorsDTO conselorsDTO, boolean printEvaluation, boolean showProgress) throws Exception {
         indexConselho++;
-        detec.resetTestConters();
-        detec.clusterAndRetest(stage, printEvaluation, showProgress);
 
-        System.out.println("\n\tEnd of testing stage");
+        TimeLogger.start("Retest Stage");
+
+        detec.resetTestConters();
+        Advice.resetConters();
+        resetConflicts();
+
+        detec.clusterAndRetest();
+
+        System.out.println("\tEnd of testing stage");
 
         detec.currentConflictsNumber = getConflitos();
 
-        double currentTestF1Score = detec.getTestF1Score();
-        System.out.println("\n\tF1-Score in the initial Testing Stage: " + currentTestF1Score);
+        double currentTestF1Score = Advice.calculateTestF1Score();
+        System.out.println("\n\tF1-Score in the current Testing Stage: " + currentTestF1Score);
         detec.setCurrentTestF1Score(currentTestF1Score);
 
-        double currentTestAccuracy = detec.getTestAccuracy();
-        System.out.println("\n\tAccuracy in the initial Testing Stage: " + currentTestAccuracy);
+        double currentTestAccuracy = Advice.calculateTestAccuracy();
+        System.out.println("\n\tAccuracy in the current Testing Stage: " + currentTestAccuracy);
         detec.setCurrentTestAccuracy(currentTestAccuracy);
 
         dataSaver.buildPerformanceCSV("testResultsReport.csv", indexConselho, conselorsDTO.getId_sample(), currentTestF1Score, currentTestAccuracy, getConflitos());
+
+        TimeLogger.stop("Retest Stage");
         System.out.println("------------------------------------------------------------------------");
 
         return detec;

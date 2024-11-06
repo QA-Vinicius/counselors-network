@@ -1,6 +1,7 @@
 package br.com.ids.consumer;
 
 import br.com.ids.dto.ConselorsDTO;
+import br.com.ids.metrics.TimeLogger;
 import br.com.ids.service.AdviceResponseCache;
 import br.com.ids.service.AdviceService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +30,26 @@ public class KafkaAdviceConsumer {
     // Variaveis para determinar o criterio de parada do consumer para o RESPONSE_ADVICE
     private int responseAdviceCount = 0;
 
+    // Variaveis para determinar a quantidade de conselhos aceitos de cada conselheiro
+    public static int adviceCountCounselor1 = 0;
+    public static int adviceCountCounselor3 = 0;
+
     // Variavel para contabilizar as amostras ja processadas
     private final Set<Integer> processedSamples = ConcurrentHashMap.newKeySet();
+
+    // Variavel para ajudar a determinar o tempo de inicio do consumer
+    private boolean firstAdvice = true;
 
     private final Logger logg = LoggerFactory.getLogger(KafkaAdviceConsumer.class);
 
     @KafkaListener(topics = {"ADVICE_TOPIC"}, groupId = "myGroup2", containerFactory = "jsonKafkaListenerContainer")
     public void consumer(ConsumerRecord<String, ConselorsDTO> record) throws Exception {
         try {
+            if(firstAdvice) {
+                TimeLogger.start("Learning Phase");
+                firstAdvice = false;
+            }
+
             logg.info("Received Message from Partition: " + record.partition() + ", Offset: " + record.offset());
 
             System.out.println("\n\t---------------------- NEW MESSAGE ----------------------");
@@ -61,6 +74,10 @@ public class KafkaAdviceConsumer {
 
                             if (responseCache.stoppingCriterion(record.value().getId_sample())) {
                                 ConselorsDTO bestAdvice = responseCache.getBestAdvice(record.value().getId_sample());
+
+                                if(bestAdvice.getId_conselheiro().equals("1")) adviceCountCounselor1++;
+                                if(bestAdvice.getId_conselheiro().equals("3")) adviceCountCounselor3++;
+
                                 adviceService.learnWithAdvice(bestAdvice);
                                 processedSamples.add(id_sample);
                             }
@@ -69,6 +86,7 @@ public class KafkaAdviceConsumer {
                             if (responseAdviceCount >= consumerStoppingCriterion()) {
                                 logg.info("Received all possible RESPONSE_ADVICE messages, stopping consumer!");
 
+                                TimeLogger.stop("Learning Phase");
                                 // Avaliar como ficou o detector apos os aprendizados com conselhos
                                 adviceService.analyzeFinalPerformance(record.value());
                                 return;

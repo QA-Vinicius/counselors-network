@@ -4,6 +4,7 @@ import br.com.ids.consumer.KafkaAdviceConsumer;
 import br.com.ids.data.DataSaver;
 import br.com.ids.domain.Detector;
 import br.com.ids.dto.ConselorsDTO;
+import br.com.ids.metrics.TimeLogger;
 import br.com.ids.producer.KafkaAdviceProducer;
 import br.com.ids.producer.KafkaFeedbackProducer;
 import br.com.ids.service.DetectorProcessor;
@@ -73,12 +74,18 @@ public class JobScheduler {
         // Zera todas as variaveis para avaliação
         detector.resetConters();
 
-        // Cria o arquivo previamente que sera populado com os f1scores apos o aprendizado com cada conselho
+        // Cria os arquivos que seram populados com dados ao longo da execucao
         dataSaver.createEvaluationPerformanceCSV("evaluationResultsReport.csv");
         dataSaver.createTestPerformanceCSV("testResultsReport.csv");
+        dataSaver.createCalculatedTestMetrics("testMetrics.csv");
+        dataSaver.createCalculatedRetestMetrics("retestMetrics.csv");
+        dataSaver.createCalculatedAdviceMetrics("advicesMetrics.csv");
 
         // Treina seus classificadores com o dataset de treino
+        TimeLogger.start("Initial Training Stage");
         detector = detectorProcessor.trainingStage(detector, false);
+        TimeLogger.stop("Initial Training Stage");
+
         detector = detectorProcessor.evaluationStage("Evaluation Stage - Before Advice", detector, false, true);
         detector = detectorProcessor.testStage("Testing Stage", detector, true, false, true, oneR_Detector2);
 //        System.out.println("FIM TREINO AVALIAÇÃO E TESTE");

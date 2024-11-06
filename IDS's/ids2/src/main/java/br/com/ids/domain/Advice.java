@@ -16,6 +16,7 @@ public class Advice {
     double accuracy;
     double advisorResult;
     double correctResult;
+    static int retestCount = 1; // variavel pra validar qual retest está sendo realizado, se é o primeiro, segundo, etc
     static String normalClass = "normal";
     public static int VP = 0, VN = 0, FP = 0, FN = 0;
     public static int correctsAdvicesIDS1 = 0;
@@ -126,7 +127,8 @@ public class Advice {
         }
 
         if(step.equals("Retest")) {
-            dataSaver.buildRetestMetricsCSV("retestMetrics.csv", instanceIndex, result, instance.classValue(), metric);
+            dataSaver.buildRetestMetricsCSV("retestMetrics.csv", "Retest " + retestCount, instanceIndex, result, instance.classValue(), metric);
+            retestCount++;
         } else {
             dataSaver.buildTestMetricsCSV("testMetrics.csv", instanceIndex, result, instance.classValue(), metric);
         }

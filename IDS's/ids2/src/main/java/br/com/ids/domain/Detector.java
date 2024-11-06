@@ -1,9 +1,11 @@
 package br.com.ids.domain;
 
+import br.com.ids.consumer.KafkaAdviceConsumer;
 import br.com.ids.data.DataLoader;
 import br.com.ids.data.DataSaver;
 import br.com.ids.dto.ConselorsDTO;
 import br.com.ids.enuns.AdviceEnum;
+import br.com.ids.metrics.TimeLogger;
 import br.com.ids.producer.KafkaAdviceProducer;
 import br.com.ids.producer.KafkaFeedbackProducer;
 import br.com.ids.service.ClassifierService;
@@ -19,6 +21,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -462,7 +465,7 @@ public class Detector {
     }
 
 
-    public void clusterAndRetest(String stage, boolean printEvaResults, boolean showProgress) throws Exception {
+    public void clusterAndRetest() throws Exception {
         int fimTrafegoNormal = -1;
 
         for (int instIndex = 0; instIndex < testInstances.size(); instIndex++) {
@@ -489,6 +492,7 @@ public class Detector {
             double classifiersOutput[][] = new double[qtdClassificadores][testInstances.size()];
 
             if(qtdClassificadores == 0) {
+                flagConflict = true;
                 increasesConflicts();
             } else {
                 for (int classifIndex = 0; classifIndex < qtdClassificadores; classifIndex++) {
@@ -502,9 +506,12 @@ public class Detector {
                         // Checa conflito com o anterior
                         if (classifiersOutput[classifIndex][instIndex] != classifiersOutput[classifIndex - 1][instIndex]) {
                             increasesConflicts();
+                            flagConflict = true;
                             break;
                         }
                         /* Se esse for o ultimo classificador da lista, é porque nao ocorreram conflitos*/
+                    } else if (classifIndex == (qtdClassificadores - 1) && flagConflict == false) {
+                        Advice.calculateMetrics("Retest", result, instance, instIndex);
                     }
                 }
             }
@@ -998,12 +1005,12 @@ public class Detector {
         return feedback;
     }
 
-    public void compareTestMetrics(boolean finalTest) {
+    public void compareTestMetrics(boolean finalTest, Integer id_sample) {
         if(finalTest){
             System.out.println("\t1- CONFLICTS: ");
             System.out.println("\tInitial: " + initialConflictsNumber + " | Final: " + getConflitos());
             int deltaConflicts = initialConflictsNumber - getConflitos();
-            System.out.println("\t-> Reduction of " + deltaConflicts + " conflicts after learning from advice!");
+            System.out.println("\t-> Reduction of " + deltaConflicts + " conflicts after learning from all the advice!");
 
             System.out.println("\n\t2- F1-SCORE:");
             System.out.println("\tInitial: " + initialTestF1Score + " | Final: " + finalTestF1Score);
@@ -1014,7 +1021,7 @@ public class Detector {
             System.out.println("\tInitial: " + initialTestAccuracy + " | Final: " + finalTestAccuracy);
             double deltaTestAccuracy = finalTestAccuracy-initialTestAccuracy;
             System.out.println("\t-> Delta Test Accuracy: " + deltaTestAccuracy);
-            System.out.println("------------------------------------------------------------------------\n\n");
+//            System.out.println("------------------------------------------------------------------------\n\n");
         }
         else {
             System.out.println("\t1- CONFLICTS: ");
@@ -1047,9 +1054,59 @@ public class Detector {
 
             System.out.println("\n\t- Good Advices (based on Testing Stage): " + goodAdvicesTest + "/" + initialConflictsNumber);
             System.out.println("\t- Bad Advices (based on Testing Stage): " + badAdvicesTest + "/" + initialConflictsNumber);
-            System.out.println("\t-----------------------------------------------------------------------------------\n\n");
         }
 
+        System.out.println("\n\t4- ANALYSIS OF THE ADVICES:");
+        System.out.println("\t\tIDS 1:" );
+        System.out.println("\t\t\t| Chosen advices: " + KafkaAdviceConsumer.adviceCountCounselor1);
+        System.out.printf("\t\t\t| Correct: %d (%.2f%%)%n",
+                Advice.correctAdvice.get("1"),
+                Advice.porcentageCorrectAdvices(KafkaAdviceConsumer.adviceCountCounselor1, Advice.correctAdvice.get("1")));
+
+        System.out.println("\t\tIDS 3:" );
+        System.out.println("\t\t\t| Chosen advices: " + KafkaAdviceConsumer.adviceCountCounselor3);
+        System.out.printf("\t\t\t| Correct: %d (%.2f%%)%n",
+                Advice.correctAdvice.get("3"),
+                Advice.porcentageCorrectAdvices(KafkaAdviceConsumer.adviceCountCounselor3, Advice.correctAdvice.get("3")));
+
+        if(finalTest) {
+            System.out.println("\n\t5- TIME METRICS (DURATION):");
+            System.out.println("\t\tTrain:" );
+            System.out.println("\t\t\t| Initial: " + TimeLogger.getDuration("Initial Training Stage", ChronoUnit.SECONDS) + " seconds");
+            System.out.println("\t\t\t| Final: " + TimeLogger.getDuration("Training Stage - Final", ChronoUnit.SECONDS) + " seconds");
+
+            System.out.println("\t\tEvaluation:" );
+            System.out.println("\t\t\t| Initial: " + TimeLogger.getDuration("Evaluation Stage - Before Advice", ChronoUnit.SECONDS) + " seconds");
+            System.out.println("\t\t\t| Final: " + TimeLogger.getDuration("Evaluation Stage - Final", ChronoUnit.SECONDS) + " seconds");
+
+            System.out.println("\t\tTest:" );
+            System.out.println("\t\t\t| Initial: " + TimeLogger.getDuration("Testing Stage", ChronoUnit.SECONDS) + " seconds");
+            System.out.println("\t\t\t| Final: " + TimeLogger.getDuration("Testing Stage - Final", ChronoUnit.SECONDS) + " seconds");
+
+            System.out.println("\t\tLearning:" );
+            System.out.println("\t\t\t| Duration: " + TimeLogger.getDuration("Learning Phase", ChronoUnit.SECONDS) + " seconds");
+        }
+        else {
+            System.out.println("\n\t5- TIME METRICS (DURATION):");
+            System.out.println("\t\tTrain:" );
+            System.out.println("\t\t\t| Initial: " + TimeLogger.getDuration("Initial Training Stage", ChronoUnit.SECONDS) + " seconds");
+            System.out.println("\t\t\t| Final: " + TimeLogger.getDuration("Training Stage - After Advice", ChronoUnit.SECONDS) + " seconds");
+
+            System.out.println("\t\tEvaluation:" );
+            System.out.println("\t\t\t| Initial: " + TimeLogger.getDuration("Evaluation Stage - Before Advice", ChronoUnit.SECONDS) + " seconds");
+            System.out.println("\t\t\t| Final: " + TimeLogger.getDuration("Evaluation Stage - After Advice", ChronoUnit.SECONDS) + " seconds");
+
+            System.out.println("\t\tTest:" );
+            System.out.println("\t\t\t| Initial: " + TimeLogger.getDuration("Testing Stage", ChronoUnit.SECONDS) + " seconds");
+            System.out.println("\t\t\t| Final: " + TimeLogger.getDuration("Retest Stage", ChronoUnit.SECONDS) + " seconds");
+
+            System.out.println("\t\tLearning:" );
+            System.out.println("\t\t\t| Duration of learning with sample: " + TimeLogger.getDuration("Learning with Sample " + id_sample, ChronoUnit.SECONDS) + " seconds");
+            System.out.println("\t\t\t| Total duration of learning so far: " + TimeLogger.getDuration("Learning Phase", ChronoUnit.MINUTES) + " minutes");
+
+        }
+
+        System.out.println("------------------------------------------------------------------------\n\n");
 //        System.out.println("\n\t2- F1-SCORE:");
 //        System.out.println("\tInitial: " + totalAverageF1ScoreInitialTest + " | Final: " + totalAverageF1ScoreFinalTest);
 //        double deltaTestF1Score = totalAverageF1ScoreFinalTest-totalAverageF1ScoreInitialTest;
