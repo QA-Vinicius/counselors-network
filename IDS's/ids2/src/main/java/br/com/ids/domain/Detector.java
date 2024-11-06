@@ -48,7 +48,7 @@ public class Detector {
     public Instances trainInstances;
     Instances evaluationInstances;
     Instances evaluationInstancesNoLabel;
-    Instances testInstances;
+    static Instances testInstances;
     Instances testInstancesNoLabel;
     int VP, VN, FP, FN;
     boolean flagConflict = false; //flag para indicar se houve ou nao conflito, se nao houver, a amostra sera adicionada no dataset de treino
@@ -339,6 +339,7 @@ public class Detector {
 
             if(stage.equals("Testing Stage - Final")) {
                 if(qtdClassificadores == 0) {
+                    flagConflict = true;
                     increasesConflicts();
                     System.out.println("Total de conflitos encontrados: " + getConflitos() + " | Amostra: " + instIndex + " [Sem classificadores]\n");
                 } else {
@@ -352,12 +353,15 @@ public class Detector {
                         if (classifIndex > 0 && classifIndex < qtdClassificadores - 1 && selectedClassifiers.size() > 1) {
                             // Checa conflito com o anterior
                             if (classifiersOutput[classifIndex][instIndex] != classifiersOutput[classifIndex - 1][instIndex]) {
+                                flagConflict = true;
                                 increasesConflicts();
                                 System.out.println("Total de conflitos encontrados: " + getConflitos() + " | Amostra: " + instIndex + "\n");
 
                                 break;
                             }
                             /* Se esse for o ultimo classificador da lista, é porque nao ocorreram conflitos*/
+                        } else if (classifIndex == (qtdClassificadores - 1) && flagConflict == false) {
+                            Advice.calculateMetrics(stage, result, instance, instIndex);
                         }
                     }
                 }
@@ -432,6 +436,7 @@ public class Detector {
                         updateResults(result, correctValue, instance);
                         /* Aprende sem Conflitos*/
                         if (flagConflict == false) {
+                            Advice.calculateMetrics(stage, result, instance, instIndex);
                             System.out.println("\t\tNão houve conflito para a amostra ["+instIndex+"] | F1-Score: " + c.getEvaluationF1Score() + "\n");
                             if (saveTrainInsance) {
 //                                trainInstances.add(instance); // Realimenta a cada amostra testada sem conflitos
@@ -735,7 +740,7 @@ public class Detector {
 
     private double handleConflict(boolean enableAdvice, double correctValue,
             int instIndex, Instance instance, boolean learnWithAdvice, Instance evaluatingPeer, boolean printEvaResu, boolean showProgress, int[] features, AdviceEnum adviceEnum) throws Exception {
-        historicalData.add(new Advice(0, 6, correctValue, normalClass));
+//        historicalData.add(new Advice(0, 6, correctValue, normalClass));
         increasesConflicts();
 
         // flag para validar se ha ou nao detectores para o detector solicitante (continua 77 em caso de nao haver)
@@ -776,13 +781,13 @@ public class Detector {
 
                 System.out.println("FEEDBACK POSITIVO\n");
 //                                        System.out.println("Class: " + advice.getClassNormal());
-                if (advice.getClassNormal().equals(normalClass)) {
+                if (advice.getNormalClass().equals(normalClass)) {
                     VN = VN + 1;
                 } else {
                     VP = VP + 1;
                 }
             } else {
-                if (advice.getClassNormal().equals(normalClass)) {
+                if (advice.getNormalClass().equals(normalClass)) {
                     FP = FP + 1;
                 } else {
                     FN = FN + 1;
