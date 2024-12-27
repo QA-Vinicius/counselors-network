@@ -17,6 +17,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 import weka.core.Instances;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
+import static br.com.ids.consumer.KafkaAdviceConsumer.formato_br;
+
 @Component
 @EnableScheduling
 @RequiredArgsConstructor
@@ -71,8 +78,33 @@ public class JobScheduler {
         detector.resetConters();
 
         //Treina seus classificadores com o dataset de treino
+        Instant inicio = Instant.now();
+        LocalDateTime horaInicio = LocalDateTime.ofInstant(inicio, ZoneId.systemDefault());
+        System.out.println("[IDS 3] Inicio Treino: " + horaInicio.format(formato_br));
         detector = detectorProcessor.trainingStage(detector, false);
+        Instant fim = Instant.now();
+        LocalDateTime horaFim = LocalDateTime.ofInstant(fim, ZoneId.systemDefault());
+        System.out.println("[IDS 3] Fim Treino: " + horaFim.format(formato_br));
+        Duration duracao = Duration.between(inicio, fim);
+
+        Instant inicioEval = Instant.now();
+        LocalDateTime horaInicioEval = LocalDateTime.ofInstant(inicioEval, ZoneId.systemDefault());
+        System.out.println("\n[IDS 3] Inicio Eval: " + horaInicioEval.format(formato_br));
         detector = detectorProcessor.evaluationStage(detector, false, true);
+        Instant fimEv = Instant.now();
+        LocalDateTime horaFimEv = LocalDateTime.ofInstant(fimEv, ZoneId.systemDefault());
+        System.out.println("[IDS 3] Fim Eval: " + horaFimEv.format(formato_br));
+
+        Duration duracaoEv = Duration.between(inicioEval, fimEv);
+
+        System.out.println("\n\n[IDS 3] Inicio Treino: " + horaInicio.format(formato_br));
+        System.out.println("[IDS 3] Fim Treino: " + horaFim.format(formato_br));
+        System.out.println("Tempo de Treino: " + duracao.getSeconds() + " segundos");
+
+
+        System.out.println("\n[IDS 3] Inicio Eval: " + horaInicioEval.format(formato_br));
+        System.out.println("[IDS 3] Fim Eval: " + horaFimEv.format(formato_br));
+        System.out.println("Tempo de Eval: " + duracaoEv.getSeconds() + " segundos");
 //        detector = detectorProcessor.testStage(detector, true, false, true, oneR_Detector3);
 //        System.out.println("FIM TREINO AVALIAÇÃO E TESTE");
     }

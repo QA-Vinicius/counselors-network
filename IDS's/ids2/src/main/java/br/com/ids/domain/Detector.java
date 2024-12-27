@@ -12,6 +12,11 @@ import br.com.ids.service.ClassifierService;
 import br.com.ids.service.DetectorClusterService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import weka.classifiers.bayes.NaiveBayes;
+import weka.classifiers.trees.J48;
+import weka.classifiers.trees.REPTree;
+import weka.classifiers.trees.RandomForest;
+import weka.classifiers.trees.RandomTree;
 import weka.clusterers.SimpleKMeans;
 import weka.core.DenseInstance;
 import weka.core.Instance;
@@ -511,6 +516,68 @@ public class Detector {
 //        System.out.println("Good Advices: " + getGoodAdvices() + "/" + conflitos);
 //        System.out.println("Os ataques começaram na amostra " + fimTrafegoNormal + "(" + (fimTrafegoNormal / testInstances.numAttributes()) + "%)");
     }
+
+
+//    public void allClassifier() throws Exception {
+//        int fimTrafegoNormal = -1;
+//
+//        for (int instIndex = 0; instIndex < testInstances.size(); instIndex++) {
+//            flagConflict = false; // flag para identificar se teve ou nao conflito - reseta aqui para nao impactar na amostra
+//
+//            // System.out.println("#############");
+//            // System.out.println("##  Testando - " + instIndex + "/" + testInstances.size());
+//            // System.out.println("#############");
+//            /* Instância Atual */
+//            Instance instance = testInstances.get(instIndex);
+//            double correctValue = instance.classValue();
+//
+//            if (!instance.stringValue(instance.attribute(instance.classIndex())).equals(normalClass)) {
+//                if (fimTrafegoNormal == -1) {
+//                    fimTrafegoNormal = instIndex;
+//                }
+//            }
+//
+//            DetectorClassifier[] classifiers = {
+//                    new DetectorClassifier(new RandomTree(), "Random Tree", "BENIGN"),
+//                    new DetectorClassifier(new RandomForest(), "Random Forest", "BENIGN"),
+//                    new DetectorClassifier(new NaiveBayes(), "Naive Bayes", "BENIGN"),
+//                    new DetectorClassifier(new J48(), "J48", "BENIGN"),
+//                    new DetectorClassifier(new REPTree(), "REP Tree", "BENIGN")
+//            };
+//
+//            Instance evaluatingPeer = testInstancesNoLabel.get(instIndex);
+//            double[] sample = evaluatingPeer.toDoubleArray();
+////            int clusterNum = kmeans.clusterInstance(evaluatingPeer);
+////            ArrayList<DetectorClassifier> selectedClassifiers = clusters[clusterNum].getSelectedClassifiers();
+////            int qtdClassificadores = selectedClassifiers.size();
+////            double classifiersOutput[][] = new double[qtdClassificadores][testInstances.size()];
+//
+//            for (DetectorClassifier classifier : classifiers) {
+//                double result = classifier.testSingle(instance);
+//
+//                if (result == instance.classValue()) {
+//                    if (instance.stringValue(instance.attribute(instance.classIndex())).equals(normalClass)) {
+//                        VN = VN + 1;
+//                        metric = "VN";
+//                    } else {
+//                        VP = VP + 1;
+//                        metric = "VP";
+//                    }
+//                } else {
+//                    if (instance.stringValue(instance.attribute(instance.classIndex())).equals(normalClass)) {
+//                        FP = FP + 1;
+//                        metric = "FP";
+//                    } else {
+//                        FN = FN + 1;
+//                        metric = "FN";
+//                    }
+//                }
+//            }
+//        }
+//
+////        System.out.println("Good Advices: " + getGoodAdvices() + "/" + conflitos);
+////        System.out.println("Os ataques começaram na amostra " + fimTrafegoNormal + "(" + (fimTrafegoNormal / testInstances.numAttributes()) + "%)");
+//    }
 
     public Advice getAdvice(int timestamp) {
         return historicalData.get(timestamp);

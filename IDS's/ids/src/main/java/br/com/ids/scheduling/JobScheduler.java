@@ -20,6 +20,11 @@ import weka.core.Instances;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
 @Component
@@ -34,6 +39,9 @@ public class JobScheduler {
     private BeanFactory beanFactory;
 
     private Detector detector;
+
+    public static final DateTimeFormatter formato_br = DateTimeFormatter.ofPattern("HH:mm:ss");
+
 
     @PostConstruct
     public void initialize() throws Exception {
@@ -71,8 +79,31 @@ public class JobScheduler {
         detector.resetConters();
 
         //Treina seus classificadores com o dataset de treino
+        Instant inicio = Instant.now();
+        LocalDateTime horaInicio = LocalDateTime.ofInstant(inicio, ZoneId.systemDefault());
+        System.out.println("[IDS 1] Inicio Treino: " + horaInicio.format(formato_br));
         detector = trainingStage(detector, false);
+        Instant fim = Instant.now();
+        LocalDateTime horaFim = LocalDateTime.ofInstant(fim, ZoneId.systemDefault());
+        System.out.println("[IDS 1] Fim Treino: " + horaFim.format(formato_br));
+        Duration duracao = Duration.between(inicio, fim);
+
+        Instant inicioEval = Instant.now();
+        LocalDateTime horaInicioEval = LocalDateTime.ofInstant(inicioEval, ZoneId.systemDefault());
+        System.out.println("\n[IDS 1] Inicio Eval: " + horaInicioEval.format(formato_br));
         detector = evaluationStage(detector, false, true);
+        Instant fimEv = Instant.now();
+        LocalDateTime horaFimEv = LocalDateTime.ofInstant(fimEv, ZoneId.systemDefault());
+        System.out.println("[IDS 1] Fim Eval: " + horaFimEv.format(formato_br));
+        Duration duracaoEv = Duration.between(inicioEval, fimEv);
+
+        System.out.println("\n\n[IDS 1] Inicio Treino: " + horaInicio.format(formato_br));
+        System.out.println("[IDS 1] Fim Treino: " + horaFim.format(formato_br));
+        System.out.println("Tempo de Treino: " + duracao.getNano() + " nanosegundos");
+
+        System.out.println("\n[IDS 1] Inicio Eval: " + horaInicioEval.format(formato_br));
+        System.out.println("[IDS 1] Fim Eval: " + horaFimEv.format(formato_br));
+        System.out.println("Tempo de Eval: " + duracaoEv.getNano() + " nanosegundos");
 
 //        detector = testStage(detector, true, false, true, oneR_Detector1);
 //        System.out.println("FIM TREINO AVALIAÇÃO E TESTE");

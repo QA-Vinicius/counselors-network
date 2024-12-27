@@ -65,6 +65,15 @@ public class DetectorClusterService {
         System.out.println("\t\tCluster " + clusterNum + ";" + strAcc);
     }
 
+    public void allClassifiers() {
+        selectedClassifiers = new ArrayList<>();
+
+        for (DetectorClassifier c : classifiers) {
+            selectedClassifiers.add(c);
+            c.setSelected(true);
+        }
+    }
+
     public void classifierSelection(boolean showProgressSelection) throws Exception {
         selectedClassifiers = new ArrayList<>();
         DetectorClassifier best = classifiers[0];

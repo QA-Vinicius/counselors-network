@@ -65,9 +65,9 @@ public class Detector {
         this.kafkaAdviceProducer = kafkaAdviceProducer;
         this.kafkaFeedbackProducer = kafkaFeedbackProducer;
 
-//        System.out.println("[IDS 1] TrainInstances size: " + trainInstances.size());
-//        System.out.println("[IDS 1] EvaluationInstances size: " + evaluationInstances.size());
-//        System.out.println("[IDS 1] TestInstances size: " + testInstances.size());
+        System.out.println("[IDS 1] TrainInstances size: " + trainInstances.size());
+        System.out.println("[IDS 1] EvaluationInstances size: " + evaluationInstances.size());
+        System.out.println("[IDS 1] TestInstances size: " + testInstances.size());
     }
 
     public void createClusters(int k, int seed) throws Exception {
